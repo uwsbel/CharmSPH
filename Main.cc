@@ -15,6 +15,7 @@
 /* readonly */ int cellArrayDimZ;
 /* readonly */ vec3 boundaryMin;
 /* readonly */ vec3 boundaryMax;
+/* readonly */ vec3 domainDim;
 /* readonly */ vec3 fluidMin;
 /* readonly */ vec3 fluidMax;
 /* readonly */ int finalStepCount; 
@@ -62,6 +63,7 @@ Main::Main(CkArgMsg* m) {
 
   boundaryMin = vec3(0,0,0);
   boundaryMax = vec3(cellArrayDimX * H, cellArrayDimY * H, cellArrayDimZ * H);
+  domainDim = boundaryMax - boundaryMin;
   double threeH = 3 * H;
   fluidMin = vec3(threeH, threeH, threeH);
   fluidMax = vec3(boundaryMax.x - threeH, boundaryMax.y - threeH, boundaryMax.z - threeH);

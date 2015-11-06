@@ -3,7 +3,7 @@
 #define __DEFS__
 
 #include "pup.h"
-
+#include "math.h"
 
 #define HYDROGEN_MASS           (1.67 * pow( 10.0,-24)) // in g
 #define VDW_A                   (1.1328 * pow(10.0, -133)) // in (g m^2/s^2) m^12
@@ -30,9 +30,9 @@
 #define KAWAY_X                 1
 #define KAWAY_Y                 1
 #define KAWAY_Z                 1
-#define NBRS_X	                (2*KAWAY_X+1)
-#define NBRS_Y                  (2*KAWAY_Y+1)
-#define NBRS_Z                  (2*KAWAY_Z+1)
+#define NBRS_X	                (2 * KAWAY_X+1)
+#define NBRS_Y                  (2 * KAWAY_Y+1)
+#define NBRS_Z                  (2 * KAWAY_Z+1)
 #define NUM_NEIGHBORS           (NBRS_X * NBRS_Y * NBRS_Z)
  
 #define PI 3.1415926535897932384626433832795028841971693993751058
@@ -50,7 +50,7 @@
 #define BASEPRES                (0)
 #define MAXVEL                  (10)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
-
+#define MULTVISCOSITY_FSI       (5.0)
 
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
@@ -100,12 +100,18 @@ struct vec3 {
   inline vec3 operator* (const double d) const {
     return vec3(d*x, d*y, d*z);
   }
+  inline vec3 operator* (const vec3 a) const {
+    return vec3(x * a.x, y * a.y, z * a.z);
+  }
   inline vec3 operator- (const vec3& rhs) const {
     return vec3(x - rhs.x, y - rhs.y, z - rhs.z);
   }
 };
 inline double dot(const vec3& a, const vec3& b) {
   return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+inline double magnitude(const vec3& a){
+  return sqrt(dot(a, a));
 }
 
 
@@ -114,7 +120,7 @@ PUPbytes(vec3)
 //class for keeping track of the properties for a particle
 struct Particle {
   double mass;
-  int typeOfParticle;
+  int typeOfParticle; // -1 if fluid, 0 if boundary, 1 if body
 
   double pressure;
   double rho, rhoHalf, dRho;
@@ -136,6 +142,7 @@ extern /* readonly */ int cellArrayDimY;
 extern /* readonly */ int cellArrayDimZ;
 extern /* readonly */ vec3 boundaryMin;
 extern /* readonly */ vec3 boundaryMax;
+extern /* readonly */ vec3 domainDim;
 extern /* readonly */ vec3 fluidMin;
 extern /* readonly */ vec3 fluidMax;
 extern /* readonly */ int finalStepCount;

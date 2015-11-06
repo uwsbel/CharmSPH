@@ -26,7 +26,8 @@ mainmodule leanmd {
   mainchare [migratable] Main { 
     entry Main(CkArgMsg* msg);
     entry [reductiontarget] void energySum(double iE, double fE);  //reduction of potential energy
-
+    //entry receiveSize;
+    //entry receiveData;
     // called when computes have been created
     entry [reductiontarget] void run() {
       serial {
@@ -36,7 +37,9 @@ mainmodule leanmd {
         cellArray.run();
         computeArray.run();
         startBenchmarkTime = CkWallTimer();
-      }
+      }        
+      //when receiveSize() { Construct sizeArray and then call scan}
+      //when scan and receiveData() {construct and write}
       //receive intial and final energies and compare
       when energySum(double iE1, double fE1) when energySum(double iE2, double fE2) serial {
         if(fabs(fE1 + fE2 - iE1 - iE2) > ENERGY_VAR) {
@@ -80,9 +83,11 @@ mainmodule leanmd {
       for(stepCount = 1; stepCount <= finalStepCount; stepCount++) {
         //send current atom positions to my computes 
         serial { 
-          if((stepCount % 50) == 0)
+          if((stepCount % 200) == 0)
           {
             writeCell(stepCount);
+            //sendSize(); // ReceveSize
+            //sendData(); // ReceiveData
           }
           sendPositions(); 
         } 

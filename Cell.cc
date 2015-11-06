@@ -25,25 +25,25 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   /* Set as lower or top boundary particle (above and below z plane)*/
   if(p.pos.z < fluidMin.z || p.pos.z > fluidMax.z)
   {
-    p.typeOfParticle = 1; // Boundary Marker
+    p.typeOfParticle = 0; // Boundary Marker
     particles.push_back(p);
   }
   /* */
   else if(p.pos.x < fluidMin.x || p.pos.x > fluidMax.x)
   {
-    p.typeOfParticle = 1;
+    p.typeOfParticle = 0;
     particles.push_back(p);
   }
   else if(p.pos.y < fluidMin.y || p.pos.y > fluidMax.y)
   {
-    p.typeOfParticle = 1;
+    p.typeOfParticle = 0;
     particles.push_back(p);  
   }
   else
   {
     if(p.pos.x <= fluidMax.x)
     {
-      p.typeOfParticle = 0;
+      p.typeOfParticle = -1;
       p.pressure = Eos(p.rho);
       particles.push_back(p);  
     }

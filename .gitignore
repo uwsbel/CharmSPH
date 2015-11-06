@@ -1,0 +1,5 @@
+*.o
+output
+leanmd.decl.h
+leanmd.def.h
+charmrun

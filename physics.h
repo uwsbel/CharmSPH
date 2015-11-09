@@ -132,6 +132,9 @@ inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, in
 
 inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount, std::vector<vec3>& dVel1, std::vector<double>& dRho1, std::vector<vec3>& dVel2, std::vector<double>& dRho2)
 {
+  int i, j;
+  int firstLen = first->lengthAll;
+  int secondLen = second->lengthAll;
 
   dVel1.resize(firstLen);
   dRho1.resize(firstLen);
@@ -142,8 +145,74 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
   double p_i, p_j, rho_i, rho_j, absDist;
   int typeOfParticle_i, typeOfParticle_j;
   vec3 gradW;
-  vec3 dVel_i;
-  double dRho_i;
+  vec3 dVel_ij;
+  double dRho_ij;
+
+  int i1, j1;
+  for(i1 = 0; i1 < firstLen; i1=i1+BLOCK_SIZE)
+  {
+    for(j1 = 0; j1 < secondLen; j1=j1+BLOCK_SIZE)
+    {
+      for(i = i1; i < i1+BLOCK_SIZE && i < firstLen; i++) 
+      {
+        pos_i            = first->part[i].pos;
+        vel_i            = first->part[i].vel;
+        p_i              = first->part[i].pressure;
+        rho_i            = first->part[i].rho;
+        typeOfParticle_i = first->part[i].typeOfParticle;
+        for(j = j1; j < j1+BLOCK_SIZE && j < secondLen; j++) 
+        {
+  
+          pos_j            = second->part[j].pos;
+          vel_j            = second->part[j].vel;
+          p_j              = second->part[j].pressure;
+          rho_j            = second->part[j].rho;
+          typeOfParticle_j = second->part[j].typeOfParticle;
+          
+          r_ij = Distance(pos_i, pos_j);
+          absDist = magnitude(r_ij);
+          
+          if (absDist > PTP_CUT_OFF)
+          {
+            continue;
+          }
+          if (typeOfParticle_i < 0  ||  typeOfParticle_j < 0) 
+          {
+
+            double multViscosity = 1.0;
+
+            if ( typeOfParticle_i >= 0 ) 
+            { //**one of them is boundary, the other one is fluid
+              multViscosity = MULTVISCOSITY_FSI;
+            }
+            if ( typeOfParticle_j >= 0) 
+            { //**one of them is boundary, the other one is fluid
+              multViscosity = MULTVISCOSITY_FSI;
+            }
+
+            gradW = GradW_Spline(r_ij);
+            double r_ij_dot_gradW = dot(r_ij, gradW);
+            double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+
+            dVel_ij = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+
+            dRho_ij = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
+
+            if(typeOfParticle_i < 0)
+            {
+              dVel1[i] += dVel_ij;
+              dRho1[i] += dRho_ij;         
+            }
+            if(typeOfParticle_j < 0)
+            {
+              dVel2[j] -= dVel_ij;
+              dRho2[j] -= dRho_ij;         
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec3>& dVel, std::vector<double>& dRho)

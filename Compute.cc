@@ -17,6 +17,22 @@ Compute::Compute(CkMigrateMessage *msg): CBase_Compute(msg)  {
   delete msg;
 }
 
+// interaction within cell. This function should be very similat to selfInteract.
+void Compute::selfInteractSPH(ParticleDataMsg *msg){
+  double energyP = 0;
+  std::vector<vec3> dVel;
+  std::vector<vec3> dRho;
+
+  energyP = calcInternalForcesSPH(msg, stepCount, dVel, dRho);
+
+  //???? What is the part doing?? Go back to the original code and print out some of the output.
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  CkGetSectionInfo(mcast1, msg);
+  mCastGrp->contribute(sizeof(vec3) * (msg->lengthAll), &dVel[0], CkReduction::sum_double, mcast1);
+
+  delete msg;
+}
+
 //interaction within a cell
 void Compute::selfInteract(ParticleDataMsg *msg){
   double energyP = 0;

@@ -17,6 +17,8 @@ class Compute : public CBase_Compute {
     Compute();
     Compute(CkMigrateMessage *msg);
     void pup(PUP::er &p);
+    
+    void selfInteractSPH(ParticleDataMsg *msg);
 
     void selfInteract(ParticleDataMsg *msg);
     void interact(ParticleDataMsg *msg1, ParticleDataMsg *msg2);

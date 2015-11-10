@@ -114,6 +114,41 @@ inline double magnitude(const vec3& a){
   return sqrt(dot(a, a));
 }
 
+struct vec4 {
+  vec3 r;
+  double l;
+
+  vec4(double d = 0.0) : r(d), l(d) { }
+  vec4(double x_, double y_, double z_, double l_) : r(x_, y_, z_), l(l_) { }
+  vec4(vec3 r_, double l_)
+  { 
+    r = r_;
+    l = l_;
+  }
+
+  inline vec4& operator += (const vec4 &rhs) {
+    r += rhs.r;
+    l += rhs.l;
+    return *this;
+  }
+  inline vec4 operator+ (const vec4& rhs) const {
+    return vec4(r + rhs.r, l + rhs.l);
+  }
+  inline vec4& operator -= (const vec4 &rhs) {
+    return *this += (rhs * -1.0);
+  }
+  inline vec4 operator* (const double d) const {
+    return vec4(r * d, l * d);
+  }
+  inline vec4 operator* (const vec4 a) const {
+    return vec4(r * a.r, l * a.l);
+  }
+  inline vec4 operator- (const vec4& rhs) const {
+    return vec4(r - rhs.r, l - rhs.l);
+  }
+};
+
+
 
 PUPbytes(vec3)
 

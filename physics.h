@@ -130,16 +130,14 @@ inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, in
   return energy;
 }
 
-inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount, std::vector<vec3>& dVel1, std::vector<double>& dRho1, std::vector<vec3>& dVel2, std::vector<double>& dRho2)
+inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount, std::vector<vec4>& dVel_dRho1, std::vector<vec4>& dVel_dRho2)
 {
   int i, j;
   int firstLen = first->lengthAll;
   int secondLen = second->lengthAll;
 
-  dVel1.resize(firstLen);
-  dRho1.resize(firstLen);
-  dVel2.resize(secondLen);
-  dRho2.resize(secondLen);
+  dVel_dRho1.resize(firstLen);
+  dVel_dRho2.resize(secondLen);
 
   vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
   double p_i, p_j, rho_i, rho_j, absDist;
@@ -168,7 +166,7 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
           p_j              = second->part[j].pressure;
           rho_j            = second->part[j].rho;
           typeOfParticle_j = second->part[j].typeOfParticle;
-          
+
           r_ij = Distance(pos_i, pos_j);
           absDist = magnitude(r_ij);
           
@@ -200,13 +198,13 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
 
             if(typeOfParticle_i < 0)
             {
-              dVel1[i] += dVel_ij;
-              dRho1[i] += dRho_ij;         
+              dVel_dRho1[i].r += dVel_ij;
+              dVel_dRho1[i].l += dRho_ij;         
             }
             if(typeOfParticle_j < 0)
             {
-              dVel2[j] -= dVel_ij;
-              dRho2[j] -= dRho_ij;         
+              dVel_dRho2[j].r -= dVel_ij;
+              dVel_dRho2[j].l -= dRho_ij;         
             }
           }
         }
@@ -215,20 +213,12 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
   }
 }
 
-inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec3>& dVel, std::vector<double>& dRho)
+inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec4>& dVel_dRho)
 {
-  int i, j, ptpCutOffSqd;
+  int i, j;
   int firstLen = first->lengthAll;
-  double powTwenty, powTen, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr;
-  vec3 firstpos, separation, force;
-  double rSix, rTwelve;
-  double energy = 0;
-  int doEnergy = 0;
-  if(stepCount == 1 || stepCount == finalStepCount)
-    doEnergy = 1;
 
-  dVel.resize(firstLen);
-  dRho.resize(firstLen);
+  dVel_dRho.resize(firstLen);
 
   vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
   double p_i, p_j, rho_i, rho_j, absDist;
@@ -236,8 +226,6 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
   vec3 gradW;
   vec3 dVel_i;
   double dRho_i;
-
-  ptpCutOffSqd = PTP_CUT_OFF * PTP_CUT_OFF;
 
   for(i = 0; i < firstLen; i++)
   {
@@ -290,8 +278,8 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
 
           dRho_i = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
 
-          dVel[i] += dVel_i;
-          dRho[i] += dRho_i;
+          dVel_dRho[i].r += dVel_i;
+          dVel_dRho[i].l += dRho_i;
         }
       }
     } 

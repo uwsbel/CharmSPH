@@ -20,15 +20,14 @@ Compute::Compute(CkMigrateMessage *msg): CBase_Compute(msg)  {
 // interaction within cell. This function should be very similat to selfInteract.
 void Compute::selfInteractSPH(ParticleDataMsg *msg){
   double energyP = 0;
-  std::vector<vec3> dVel;
-  std::vector<vec3> dRho;
+  std::vector<vec4> dVel_dRho;
 
-  energyP = calcInternalForcesSPH(msg, stepCount, dVel, dRho);
+  calcInternalForcesSPH(msg, stepCount, dVel_dRho);
 
   //???? What is the part doing?? Go back to the original code and print out some of the output.
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   CkGetSectionInfo(mcast1, msg);
-  mCastGrp->contribute(sizeof(vec3) * (msg->lengthAll), &dVel[0], CkReduction::sum_double, mcast1);
+  mCastGrp->contribute(sizeof(vec4) * (msg->lengthAll), &dVel_dRho[0], CkReduction::sum_double, mcast1);
 
   delete msg;
 }
@@ -47,9 +46,33 @@ void Compute::selfInteract(ParticleDataMsg *msg){
   //contribute to force reduction
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   CkGetSectionInfo(mcast1, msg);
-  mCastGrp->contribute(sizeof(vec3)*msg->lengthAll, &force1[0], CkReduction::sum_double, mcast1);
+  mCastGrp->contribute(sizeof(vec3) * msg->lengthAll, &force1[0], CkReduction::sum_double, mcast1);
 
   delete msg;
+}
+
+//interaction between two cells
+void Compute::interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
+  CkSectionInfo *handleA = &mcast1;
+  CkSectionInfo *handleB = &mcast2;
+  if (msg2->x * cellArrayDimY * cellArrayDimZ + msg2->y * cellArrayDimZ + msg2->z <
+      msg1->x * cellArrayDimY * cellArrayDimZ + msg1->y * cellArrayDimZ + msg1->z)
+  {
+    swap(handleA, handleB);
+  }
+
+  std::vector<vec4> dVel_dRho1, dVel_dRho2;
+  calcPairForcesSPH(msg1, msg2, stepCount, dVel_dRho1, dVel_dRho2);
+
+  //contribute to force reduction
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  CkGetSectionInfo(*handleA, msg1);
+  mCastGrp->contribute(sizeof(vec4)*msg1->lengthAll, &dVel_dRho1[0], CkReduction::sum_double, *handleA);
+  CkGetSectionInfo(*handleB, msg2);
+  mCastGrp->contribute(sizeof(vec4)*msg2->lengthAll, &dVel_dRho2[0], CkReduction::sum_double, *handleB);
+
+  delete msg1;
+  delete msg2;
 }
 
 //interaction between two cells

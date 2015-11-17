@@ -39,7 +39,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-5)
+#define DT                      (1e-6)
 #define H                       (0.05)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * RHO0)
@@ -55,8 +55,8 @@
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
-#define PTP_CUT_OFF             2 * H // cut off for atom to atom interactions
-#define CELL_MARGIN             0.01 * H  // constant diff between cutoff and cell size
+#define PTP_CUT_OFF             H // cut off for atom to atom interactions
+#define CELL_MARGIN             0.0001 * H  // constant diff between cutoff and cell size
 #define CELL_SIZE_X             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X
 #define CELL_SIZE_Y             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Y
 #define CELL_SIZE_Z             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Z
@@ -151,6 +151,7 @@ struct vec4 {
 
 
 PUPbytes(vec3)
+PUPbytes(vec4)
 
 //class for keeping track of the properties for a particle
 struct Particle {
@@ -158,11 +159,11 @@ struct Particle {
   int typeOfParticle; // -1 if fluid, 0 if boundary, 1 if body
 
   double pressure;
-  double rho, rhoHalf, dRho;
+  double rho, dRho;
   //   Position, acceleration, velocity
   vec3 pos, vel, acc;
-  vec3 halfVel;
 };
+
 PUPbytes(Particle);
 
 #include "leanmd.decl.h"

@@ -67,7 +67,9 @@ mainmodule leanmd {
     entry void ResumeFromSync();    //resume from here after load balancing
     entry [reductiontarget] void startCheckpoint(); //reduction to start checkpointing
     entry void recvCheckPointDone();  //checkpointing done, resume application
-    entry [reductiontarget] void reduceForces(vec3 forces[n], int n);   //receives forces from my computes on my atoms
+    //entry [reductiontarget] void reduceForces(vec3 forces[n], int n);   //receives forces from my computes on my atoms
+    entry [reductiontarget] void reduceForcesSPH(vec4 dVel_dRho[n], int n);   //receives forces from my computes on my atoms
+
 
     //function to perform iterations for Cells
     entry void run() {
@@ -85,7 +87,7 @@ mainmodule leanmd {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 200) == 0)
+          if((stepCount % 100) == 0)
           {
             writeCell(stepCount);
             //sendSize(); // ReceveSize
@@ -95,7 +97,8 @@ mainmodule leanmd {
         } 
 
         //update properties of atoms using new force values 
-        when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
+        //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
+        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { updatePropertiesSPH(dVel_dRho); }
 
         if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
         {
@@ -169,10 +172,10 @@ mainmodule leanmd {
       {
         //self interaction check
         if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2)
-          when calculateForces(ParticleDataMsg *msg) serial { selfInteract(msg); }
+          when calculateForces(ParticleDataMsg *msg) serial { selfInteractSPH(msg); }
         else
           //receive positions from two cells
-          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { interact(msg1, msg2); }
+          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { interactSPH(msg1, msg2); }
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod== 0) {
           serial { AtSync();}

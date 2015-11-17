@@ -10,44 +10,60 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   //load balancing to be called when AtSync is called
   usesAtSync = true;
 
+  int numParticlesToAdd = 8;
+  double quarterH = H / 4;
+  double HSquared = H * H;
 
   int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
   myNumParts = 1;
   vec3 center((thisIndex.x * H), (thisIndex.y * H), (thisIndex.z * H));
+  vec3 particlesToAdd[numParticlesToAdd];
+  particlesToAdd[0] = vec3(center.x + quarterH, center.y + quarterH, center.z + quarterH);
+  particlesToAdd[1] = vec3(center.x + quarterH, center.y + quarterH, center.z - quarterH);
+  particlesToAdd[2] = vec3(center.x + quarterH, center.y - quarterH, center.z + quarterH);
+  particlesToAdd[3] = vec3(center.x + quarterH, center.y - quarterH, center.z - quarterH);
+  particlesToAdd[4] = vec3(center.x - quarterH, center.y + quarterH, center.z + quarterH);
+  particlesToAdd[5] = vec3(center.x - quarterH, center.y + quarterH, center.z - quarterH);
+  particlesToAdd[6] = vec3(center.x - quarterH, center.y - quarterH, center.z + quarterH);
+  particlesToAdd[7] = vec3(center.x - quarterH, center.y - quarterH, center.z - quarterH);
 
-  Particle p = Particle();
-  p.pos = center;
-  p.vel = vec3(0,0,0);
-  p.acc = vec3(0,0,0);
-  p.mass = HYDROGEN_MASS;
-  p.rho = RHO0;
-  p.pressure = BOUNDARY_PRESSURE;
-  /* Set as lower or top boundary particle (above and below z plane)*/
-  if(p.pos.z < fluidMin.z || p.pos.z > fluidMax.z)
+  for(int i = 0;i < numParticlesToAdd;i++)
   {
-    p.typeOfParticle = 0; // Boundary Marker
-    particles.push_back(p);
-  }
-  /* */
-  else if(p.pos.x < fluidMin.x || p.pos.x > fluidMax.x)
-  {
-    p.typeOfParticle = 0;
-    particles.push_back(p);
-  }
-  else if(p.pos.y < fluidMin.y || p.pos.y > fluidMax.y)
-  {
-    p.typeOfParticle = 0;
-    particles.push_back(p);  
-  }
-  else
-  {
-    if(p.pos.x <= fluidMax.x)
+    Particle p = Particle();
+    p.pos = particlesToAdd[i];
+    p.vel = vec3(0,0,0);
+    p.acc = vec3(0,0,0);
+    p.mass = PARTICLE_MASS;
+    p.rho = RHO0;
+    p.pressure = BOUNDARY_PRESSURE;
+    /* Set as lower or top boundary particle (above and below z plane)*/
+    if(p.pos.z < fluidMin.z || p.pos.z > fluidMax.z)
     {
-      p.typeOfParticle = -1;
-      p.pressure = Eos(p.rho);
+      p.typeOfParticle = 0; // Boundary Marker
+      particles.push_back(p);
+    }
+    /* */
+    else if(p.pos.x < fluidMin.x || p.pos.x > fluidMax.x)
+    {
+      p.typeOfParticle = 0;
+      particles.push_back(p);
+    }
+    else if(p.pos.y < fluidMin.y || p.pos.y > fluidMax.y)
+    {
+      p.typeOfParticle = 0;
       particles.push_back(p);  
     }
+    else
+    {
+      if(p.pos.x <= fluidMax.x)
+      {
+        p.typeOfParticle = -1;
+        p.pressure = Eos(p.rho);
+        particles.push_back(p);  
+      }
+    }
   }
+
 
   energy[0] = energy[1] = 0;
   setMigratable(false);
@@ -120,7 +136,10 @@ void Cell::createSection() {
   //delegate the communication responsibility for this section to multicast library
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   mCastSecProxy.ckSectionDelegate(mCastGrp);
-  mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForces), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+  //mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForces), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+  // Reduction target to compute proxies are reduceForcesSPH
+  mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForcesSPH), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+
 }
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
@@ -133,7 +152,7 @@ void Cell::sendPositions() {
   // before sending the message.
   for(int i = 0; i < len; ++i)
   {
-    if(particles[i].typeOfParticle == 0)
+    if(particles[i].typeOfParticle < 0)
     {
       particles[i].pressure = Eos(particles[i].rho);
     }
@@ -231,28 +250,44 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) {
   else if (p.pos.z > (z+CELL_SIZE_Z)) pz = 1;
 }
 
+// // Function to update properties (i.e. acceleration, velocity and position) in particles
+// void Cell::updateProperties(vec3 *forces) {
+//   int i;
+//   double powTen, powTwenty, realTimeDeltaVel, invMassParticle;
+//   powTen = pow(10.0, 10);
+//   powTwenty = pow(10.0, -20);
+//   realTimeDeltaVel = DEFAULT_DELTA * powTwenty;
+//   for(i = 0; i < particles.size(); i++) {
+//     //calculate energy only in begining and end
+//     if(stepCount == 1) {
+//       energy[0] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen); // in milliJoules
+//     } else if(stepCount == finalStepCount) { 
+//       energy[1] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen);
+//     }
+//     // applying kinetic equations
+//     invMassParticle = 1 / particles[i].mass;
+//     particles[i].acc = forces[i] * invMassParticle; // in m/sec^2
+//     particles[i].vel += particles[i].acc * realTimeDeltaVel; // in A/fs
+
+//     limitVelocity(particles[i]);
+//     particles[i].pos += particles[i].vel * DEFAULT_DELTA; // in A
+
+//   }
+// }
+
 // Function to update properties (i.e. acceleration, velocity and position) in particles
-void Cell::updateProperties(vec3 *forces) {
+void Cell::updatePropertiesSPH(vec4 *dVel_dRho) 
+{
   int i;
-  double powTen, powTwenty, realTimeDeltaVel, invMassParticle;
-  powTen = pow(10.0, 10);
-  powTwenty = pow(10.0, -20);
-  realTimeDeltaVel = DEFAULT_DELTA * powTwenty;
-  for(i = 0; i < particles.size(); i++) {
-    //calculate energy only in begining and end
-    if(stepCount == 1) {
-      energy[0] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen); // in milliJoules
-    } else if(stepCount == finalStepCount) { 
-      energy[1] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen);
-    }
-    // applying kinetic equations
-    invMassParticle = 1 / particles[i].mass;
-    particles[i].acc = forces[i] * invMassParticle; // in m/sec^2
-    particles[i].vel += particles[i].acc * realTimeDeltaVel; // in A/fs
 
-    limitVelocity(particles[i]);
-    particles[i].pos += particles[i].vel * DEFAULT_DELTA; // in A
+  for(i = 0; i < particles.size(); i++) 
+  {
+    particles[i].acc = dVel_dRho[i].r;
+    particles[i].dRho = dVel_dRho[i].l;
 
+    particles[i].vel += dVel_dRho[i].r * DT;; 
+    particles[i].pos += particles[i].vel * DT;
+    particles[i].rho += dVel_dRho[i].l * DT;
   }
 }
 
@@ -308,7 +343,8 @@ void Cell::pup(PUP::er &p) {
     else{
       CkMulticastMgr *mg = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
       mg->resetSection(mCastSecProxy);
-      mg->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForces), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+      //mg->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForces), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+      mg->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForcesSPH), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
     }
   }
 }

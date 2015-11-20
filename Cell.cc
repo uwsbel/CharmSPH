@@ -1,5 +1,6 @@
 #include <sstream>
 #include <fstream>
+#include <iostream>
 
 #include "defs.h"
 #include "leanmd.decl.h"
@@ -11,21 +12,21 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   usesAtSync = true;
 
   int numParticlesToAdd = 8;
-  double quarterH = H / 4;
+  double halfH = H / 2;
   double HSquared = H * H;
 
   int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
   myNumParts = 1;
   vec3 center((thisIndex.x * H), (thisIndex.y * H), (thisIndex.z * H));
-  vec3 particlesToAdd[numParticlesToAdd];
-  particlesToAdd[0] = vec3(center.x + quarterH, center.y + quarterH, center.z + quarterH);
-  particlesToAdd[1] = vec3(center.x + quarterH, center.y + quarterH, center.z - quarterH);
-  particlesToAdd[2] = vec3(center.x + quarterH, center.y - quarterH, center.z + quarterH);
-  particlesToAdd[3] = vec3(center.x + quarterH, center.y - quarterH, center.z - quarterH);
-  particlesToAdd[4] = vec3(center.x - quarterH, center.y + quarterH, center.z + quarterH);
-  particlesToAdd[5] = vec3(center.x - quarterH, center.y + quarterH, center.z - quarterH);
-  particlesToAdd[6] = vec3(center.x - quarterH, center.y - quarterH, center.z + quarterH);
-  particlesToAdd[7] = vec3(center.x - quarterH, center.y - quarterH, center.z - quarterH);
+  vec3 particlesToAdd[8];
+  particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
+  particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
+  particlesToAdd[2] = vec3(center.x + halfH, center.y - halfH, center.z + halfH);
+  particlesToAdd[3] = vec3(center.x + halfH, center.y - halfH, center.z - halfH);
+  particlesToAdd[4] = vec3(center.x - halfH, center.y + halfH, center.z + halfH);
+  particlesToAdd[5] = vec3(center.x - halfH, center.y + halfH, center.z - halfH);
+  particlesToAdd[6] = vec3(center.x - halfH, center.y - halfH, center.z + halfH);
+  particlesToAdd[7] = vec3(center.x - halfH, center.y - halfH, center.z - halfH);
 
   for(int i = 0;i < numParticlesToAdd;i++)
   {
@@ -37,30 +38,30 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
     p.rho = RHO0;
     p.pressure = BOUNDARY_PRESSURE;
     /* Set as lower or top boundary particle (above and below z plane)*/
-    if(p.pos.z < fluidMin.z || p.pos.z > fluidMax.z)
+    if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+       (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
+       (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
     {
-      p.typeOfParticle = 0; // Boundary Marker
+      p.typeOfParticle = -1; // fluid Marker
+      p.pressure = Eos(p.rho);
+
       particles.push_back(p);
     }
     /* */
-    else if(p.pos.x < fluidMin.x || p.pos.x > fluidMax.x)
-    {
-      p.typeOfParticle = 0;
-      particles.push_back(p);
-    }
-    else if(p.pos.y < fluidMin.y || p.pos.y > fluidMax.y)
-    {
-      p.typeOfParticle = 0;
-      particles.push_back(p);  
-    }
+    // else if(p.pos.x > fluidMin.x || p.pos.x < fluidMax.x)
+    // {
+    //   p.typeOfParticle = 0;
+    //   particles.push_back(p);
+    // }
+    // else if(p.pos.y <= fluidMin.y || p.pos.y >= fluidMax.y)
+    // {
+    //   p.typeOfParticle = 0;
+    //   particles.push_back(p);  
+    // }
     else
     {
-      if(p.pos.x <= fluidMax.x)
-      {
-        p.typeOfParticle = -1;
-        p.pressure = Eos(p.rho);
-        particles.push_back(p);  
-      }
+      p.typeOfParticle = 0; // Boundary
+      particles.push_back(p);  
     }
   }
 
@@ -147,6 +148,7 @@ void Cell::sendPositions() {
   unsigned int len = particles.size();
   //create the particle and control message to be sent to computes
   ParticleDataMsg* msg = new (len) ParticleDataMsg(thisIndex.x, thisIndex.y, thisIndex.z, len);
+  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
 
   // Create a messahe with all the particles in the cell. Calculate the pressure of fluid particles
   // before sending the message.
@@ -158,7 +160,10 @@ void Cell::sendPositions() {
     }
     msg->part[i] = particles[i];
   }
-
+  if(id == 0)
+  {
+    std::cout << "Hello from chare 0" << std::endl;
+  }
   mCastSecProxy.calculateForces(msg);
 }
 

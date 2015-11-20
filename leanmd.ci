@@ -87,7 +87,7 @@ mainmodule leanmd {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0)
+          if((stepCount % 10) == 0)
           {
             writeCell(stepCount);
             //sendSize(); // ReceveSize

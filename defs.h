@@ -4,6 +4,8 @@
 
 #include "pup.h"
 #include "math.h"
+#include <cstdio>
+
 
 #define HYDROGEN_MASS           (1.67 * pow( 10.0,-24)) // in g
 #define VDW_A                   (1.1328 * pow(10.0, -133)) // in (g m^2/s^2) m^12
@@ -56,10 +58,10 @@
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
 #define PTP_CUT_OFF             H // cut off for atom to atom interactions
-#define CELL_MARGIN             0.0001 * H  // constant diff between cutoff and cell size
-#define CELL_SIZE_X             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X
-#define CELL_SIZE_Y             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Y
-#define CELL_SIZE_Z             (PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Z
+#define CELL_MARGIN             0  // constant diff between cutoff and cell size
+#define CELL_SIZE_X             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X
+#define CELL_SIZE_Y             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Y
+#define CELL_SIZE_Z             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Z
 
 
 //variables to control initial uniform placement of atoms;
@@ -86,6 +88,10 @@ struct vec3 {
 
   vec3(double d = 0.0) : x(d), y(d), z(d) { }
   vec3(double x_, double y_, double z_) : x(x_), y(y_), z(z_) { }
+  void print()
+  {
+    printf("x = %f, y = %f, z = %f \n", x, y, z);
+  }
 
   inline vec3& operator += (const vec3 &rhs) {
     x += rhs.x; y += rhs.y; z += rhs.z;
@@ -93,6 +99,9 @@ struct vec3 {
   }
   inline vec3 operator+ (const vec3& rhs) const {
     return vec3(x + rhs.x, y + rhs.y, z + rhs.z);
+  }
+  inline vec3 operator+ (const double rhs) const {
+    return vec3(x + rhs, y + rhs, z + rhs);
   }
   inline vec3& operator -= (const vec3 &rhs) {
     return *this += (rhs * -1.0);
@@ -105,6 +114,9 @@ struct vec3 {
   }
   inline vec3 operator- (const vec3& rhs) const {
     return vec3(x - rhs.x, y - rhs.y, z - rhs.z);
+  }
+  inline vec3 operator- (const double rhs) const {
+    return vec3(x - rhs, y - rhs, z - rhs);
   }
 };
 inline double dot(const vec3& a, const vec3& b) {

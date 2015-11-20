@@ -58,15 +58,17 @@ Main::Main(CkArgMsg* m) {
     cellArrayDimX=atoi(m->argv[cur_arg++]);
     cellArrayDimY=atoi(m->argv[cur_arg++]);
     cellArrayDimZ=atoi(m->argv[cur_arg++]);
-    CkPrintf("Cell Array Dimension X:%d Y:%d Z:%d of size %d %d %d\n",cellArrayDimX,cellArrayDimY,cellArrayDimZ,CELL_SIZE_X,CELL_SIZE_Y,CELL_SIZE_Z);
+    CkPrintf("Cell Array Dimension X:%d Y:%d Z:%d of size %f %f %f\n",cellArrayDimX,cellArrayDimY,cellArrayDimZ,CELL_SIZE_X,CELL_SIZE_Y,CELL_SIZE_Z);
   }
-
-  boundaryMin = vec3(0,0,0);
-  boundaryMax = vec3(cellArrayDimX * H, cellArrayDimY * H, cellArrayDimZ * H);
+  double halfH = H/2;
+  boundaryMin = vec3(-halfH,-halfH,-halfH);
+  boundaryMax = vec3((cellArrayDimX-1) * H, (cellArrayDimY-1) * H, (cellArrayDimZ-1) * H) + halfH;
+  boundaryMax.print();
   domainDim = boundaryMax - boundaryMin;
-  double threeH = 3 * H;
-  fluidMin = vec3(threeH, threeH, threeH);
-  fluidMax = vec3(boundaryMax.x - threeH, boundaryMax.y - threeH, boundaryMax.z - threeH);
+  double twoH = (2 * H);
+  fluidMin = vec3(twoH, twoH, twoH);
+  fluidMax = vec3(boundaryMax.x, boundaryMax.y, boundaryMax.z) - twoH;
+  fluidMax.print();
 
   //number of steps in simulation
   if (m->argc > cur_arg) {

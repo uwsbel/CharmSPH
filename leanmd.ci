@@ -103,13 +103,20 @@ mainmodule leanmd {
         if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
         {
           //send atoms that have moved beyond my cell to neighbors
-          serial { migrateParticles(); } 
+          serial 
+          { 
+            migrateParticles(); 
+          } 
     
           //receive particles from my neighbors
-          for(updateCount = 0; updateCount < inbrs; updateCount++) {
-            when receiveParticles(const std::vector<Particle> &updates) serial {
+          for(updateCount = 0; updateCount < inbrs; updateCount++) 
+          {
+            when receiveParticles(const std::vector<Particle> &updates) serial 
+            {
               for (int i = 0; i < updates.size(); ++i)
+              {
                 particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
+              }
             }
           }
         }
@@ -128,16 +135,23 @@ mainmodule leanmd {
 
         //periodically checkpointing
         if (stepCount % checkptFreq == 0) {
-          serial {
+          serial 
+          {
             //coordinate to start checkpointing
             if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0)
+            {
               CkPrintf("[%d] CHECKPOINT at step %d\n", CkMyPe(), stepCount);
+            }
             contribute(CkCallback(CkReductionTarget(Cell,startCheckpoint),thisProxy(0,0,0)));
           }
           if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0) {
-            when startCheckpoint() serial {
+            when startCheckpoint() serial 
+            {
               CkCallback cb(CkIndex_Cell::recvCheckPointDone(),thisProxy);
-              if (checkptStrategy == 0) CkStartCheckpoint(logs.c_str(), cb);
+              if (checkptStrategy == 0) 
+              {
+                CkStartCheckpoint(logs.c_str(), cb);
+              }
               else CkStartMemCheckpoint(cb);
             }
           }
@@ -172,10 +186,14 @@ mainmodule leanmd {
       {
         //self interaction check
         if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2)
+        {
           when calculateForces(ParticleDataMsg *msg) serial { selfInteractSPH(msg); }
+        }
         else
+        {
           //receive positions from two cells
           when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { interactSPH(msg1, msg2); }
+        }
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod== 0) {
           serial { AtSync();}

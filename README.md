@@ -1,5 +1,8 @@
 # CharmSPH
-Charm++ implementation of Smoothed Particle Hydrodynamics
+Charm++ implementation of Smoothed Particle Hydrodynamics for distributed memory architectures
+
+## Hybrid decomposition
+Cells are a dense 3D chare array that represent a spatial decomposition of the 3D simulation space. They are responsible for sending positions and collecting the forces for their atoms. Computes, on the other hand, form a sparse 6-dimensional array of chares. Such a representation makes it convenient for a pair of cells with coordinates (x1, y1, z1) and (x2, y2, z2) to use a compute with coordinates (x1, y1, z1, x2, y2, z2) to calculate forces for their atoms.
 
 ## Charm++ Development Workflows
 Charm++ is an unusual framework to develop for. Setting it up so a developer can code in an IDE is complicated, Windows development is not fully supported and if you are learning Charm++ running a program in a 2-4 cores machine (your laptop) is not the same as running your program in a development node (20-64 cores) or a few nodes. This section of the documentation includes different development setups various lab members use. 

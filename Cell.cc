@@ -160,10 +160,7 @@ void Cell::sendPositions() {
     }
     msg->part[i] = particles[i];
   }
-  if(id == 0)
-  {
-    std::cout << "Hello from chare 0" << std::endl;
-  }
+
   mCastSecProxy.calculateForces(msg);
 }
 
@@ -208,28 +205,38 @@ void Cell::writeCell(int stepCount)
 }
 
 //send the atoms that have moved beyond my cell to neighbors
-void Cell::migrateParticles(){
+void Cell::migrateParticles()
+{
+  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+
   int x1, y1, z1;
   std::vector<std::vector<Particle> > outgoing;
   outgoing.resize(inbrs);
+  //CkPrintf("Check 1 from chare %d",id);
 
   int size = particles.size();
-  for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) {
+  for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
+  {
     migrateToCell(*iter, x1, y1, z1);
-    if(x1!=0 || y1!=0 || z1!=0) {
+    if(x1!=0 || y1!=0 || z1!=0) 
+    {
       outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
       std::swap(*iter, particles[size - 1]);
       size--;
     }
   }
-  particles.resize(size);
+  //CkPrintf("Check 2 from chare %d",id);
 
-  for(int num = 0; num < inbrs; num++) {
+  particles.resize(size);
+  for(int num = 0; num < inbrs; num++) 
+  {
     x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
     y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
     z1 = num % NBRS_Z                       - NBRS_Z/2;
     cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
   }
+  //CkPrintf("Check 3 from chare %d",id);
+
 }
 
 //check if the particle is to be moved

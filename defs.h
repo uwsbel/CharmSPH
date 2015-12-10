@@ -6,7 +6,6 @@
 #include "math.h"
 #include <cstdio>
 
-
 #define HYDROGEN_MASS           (1.67 * pow( 10.0,-24)) // in g
 #define VDW_A                   (1.1328 * pow(10.0, -133)) // in (g m^2/s^2) m^12
 #define VDW_B                   (2.23224 * pow(10.0, -76)) // in (g m^2/s^2) m^6
@@ -29,19 +28,19 @@
 #define DEFAULT_LDB_PERIOD      20
 #define DEFAULT_FT_PERIOD       100000
 
-#define KAWAY_X                 1
-#define KAWAY_Y                 1
-#define KAWAY_Z                 1
-#define NBRS_X	                (2 * KAWAY_X+1)
-#define NBRS_Y                  (2 * KAWAY_Y+1)
-#define NBRS_Z                  (2 * KAWAY_Z+1)
+#define KAWAY_X                 1 //2 Original val
+#define KAWAY_Y                 1 //2
+#define KAWAY_Z                 1 //1
+#define NBRS_X	                ((2 * KAWAY_X) + 1)
+#define NBRS_Y                  ((2 * KAWAY_Y) + 1)
+#define NBRS_Z                  ((2 * KAWAY_Z) + 1)
 #define NUM_NEIGHBORS           (NBRS_X * NBRS_Y * NBRS_Z)
  
 #define PI 3.1415926535897932384626433832795028841971693993751058
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-6)
+#define DT                      (1e-7)
 #define H                       (0.05)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * RHO0)
@@ -59,7 +58,7 @@
 #define CELLARRAY_DIM_Z         3
 #define PTP_CUT_OFF             H // cut off for atom to atom interactions
 #define CELL_MARGIN             0  // constant diff between cutoff and cell size
-#define CELL_SIZE_X             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X
+#define CELL_SIZE_X             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X // 
 #define CELL_SIZE_Y             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Y
 #define CELL_SIZE_Z             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Z
 

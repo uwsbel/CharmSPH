@@ -1,0 +1,16 @@
+
+
+LeanMD 
+    * 
+
+CkIO
+    * tests/charm++/io
+
+Debug ++debug
+
+charmdebug
+
+projections - good for debugging
+    --enable-tracing, charm will produce a log file per PE.
+
+charmrun ++mpirun 

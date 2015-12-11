@@ -79,7 +79,7 @@ public:
   ~Cell();
   void createComputes();  //add my computes
   void createSection();   //created multicast section of computes
-  void migrateParticles();
+  void migrateParticles(int step);
   void sendPositions();
   void writeCell(int stepCount);
   void startCheckpoint(int);

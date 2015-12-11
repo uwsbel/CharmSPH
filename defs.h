@@ -43,7 +43,7 @@
 #define DT                      (1e-7)
 #define H                       (0.05)
 #define RHO0                    (1000)
-#define PARTICLE_MASS           (H * H * RHO0)
+#define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
 #define MU                      (0.001)
 #define GRAVITY                 (-9.81)
 #define PRESSURE_CONSTANT       (0.5)
@@ -74,7 +74,7 @@
 #define CELL_ORIGIN_Y	          0
 #define CELL_ORIGIN_Z	          0
 
-#define MIGRATE_STEPCOUNT	      20
+#define MIGRATE_STEPCOUNT	      5
 #define DEFAULT_FINALSTEPCOUNT	1001
 #define MAX_VELOCITY		        .1  //in A/fs
 

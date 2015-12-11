@@ -6,6 +6,7 @@
 #include "leanmd.decl.h"
 #include "Cell.h"
 #include "ckmulticast.h"
+#include "ckio.h"
 
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
@@ -17,7 +18,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
 
   int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
   myNumParts = 1;
-  vec3 center((thisIndex.x * H), (thisIndex.y * H), (thisIndex.z * H));
+  vec3 center((thisIndex.x * 2 * H) + H, (thisIndex.y * 2 * H) + H, (thisIndex.z * 2 * H) + H);
   vec3 particlesToAdd[8];
   particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
   particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
@@ -205,19 +206,20 @@ void Cell::writeCell(int stepCount)
 }
 
 //send the atoms that have moved beyond my cell to neighbors
-void Cell::migrateParticles()
+void Cell::migrateParticles(int step)
 {
   int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
 
   int x1, y1, z1;
   std::vector<std::vector<Particle> > outgoing;
-  outgoing.resize(inbrs);
-  //CkPrintf("Check 1 from chare %d",id);
+  outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
+  //CkPrintf("Check 1 from chare %d\n",id);
 
   int size = particles.size();
   for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
   {
-    migrateToCell(*iter, x1, y1, z1);
+    // x1, y1 and z1 have the neighbor indeces relative to current chare
+    migrateToCell(*iter, x1, y1, z1); 
     if(x1!=0 || y1!=0 || z1!=0) 
     {
       outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
@@ -225,7 +227,7 @@ void Cell::migrateParticles()
       size--;
     }
   }
-  //CkPrintf("Check 2 from chare %d",id);
+  //CkPrintf("Check 2 from chare %d\n",id);
 
   particles.resize(size);
   for(int num = 0; num < inbrs; num++) 
@@ -235,7 +237,7 @@ void Cell::migrateParticles()
     z1 = num % NBRS_Z                       - NBRS_Z/2;
     cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
   }
-  //CkPrintf("Check 3 from chare %d",id);
+  //CkPrintf("Check 3 from chare %d\n",id);
 
 }
 
@@ -246,19 +248,20 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) {
   double z = thisIndex.z * CELL_SIZE_Z + CELL_ORIGIN_Z;
   px = py = pz = 0;
 
-  if (p.pos.x < (x-CELL_SIZE_X)) px = -2;
-  else if (p.pos.x < x) px = -1;
-  else if (p.pos.x > (x+2*CELL_SIZE_X)) px = 2;
+  // We dont need -2 checka and 2 check
+  //if (p.pos.x < (x-CELL_SIZE_X)) px = -2;
+  if (p.pos.x < x) px = -1;
+  //else if (p.pos.x > (x+2*CELL_SIZE_X)) px = 2;
   else if (p.pos.x > (x+CELL_SIZE_X)) px = 1;
 
-  if (p.pos.y < (y-CELL_SIZE_Y)) py = -2;
-  else if (p.pos.y < y) py = -1;
-  else if (p.pos.y > (y+2*CELL_SIZE_Y)) py = 2;
+  //if (p.pos.y < (y-CELL_SIZE_Y)) py = -2;
+  if (p.pos.y < y) py = -1;
+  //else if (p.pos.y > (y+2*CELL_SIZE_Y)) py = 2;
   else if (p.pos.y > (y+CELL_SIZE_Y)) py = 1;
 
-  if (p.pos.z < (z-CELL_SIZE_Z)) pz = -2;
-  else if (p.pos.z < z) pz = -1;
-  else if (p.pos.z > (z+2*CELL_SIZE_Z)) pz = 2;
+  //if (p.pos.z < (z-CELL_SIZE_Z)) pz = -2;
+  if (p.pos.z < z) pz = -1;
+  //else if (p.pos.z > (z+2*CELL_SIZE_Z)) pz = 2;
   else if (p.pos.z > (z+CELL_SIZE_Z)) pz = 1;
 }
 

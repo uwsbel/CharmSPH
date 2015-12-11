@@ -105,7 +105,9 @@ mainmodule leanmd {
           //send atoms that have moved beyond my cell to neighbors
           serial 
           { 
-            migrateParticles(); 
+            //CkPrintf("A1\n");
+            migrateParticles(stepCount); 
+            //CkPrintf("A2\n");
           } 
     
           //receive particles from my neighbors
@@ -113,10 +115,13 @@ mainmodule leanmd {
           {
             when receiveParticles(const std::vector<Particle> &updates) serial 
             {
+              //CkPrintf("A3\n");
               for (int i = 0; i < updates.size(); ++i)
               {
                 particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
               }
+              //CkPrintf("A4\n");
+
             }
           }
         }

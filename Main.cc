@@ -62,7 +62,7 @@ Main::Main(CkArgMsg* m) {
   }
   double halfH = H/2;
   boundaryMin = vec3(-halfH,-halfH,-halfH);
-  boundaryMax = vec3((cellArrayDimX-1) * H, (cellArrayDimY-1) * H, (cellArrayDimZ-1) * H) + halfH;
+  boundaryMax = vec3((cellArrayDimX) * CELL_SIZE_X, (cellArrayDimY) * CELL_SIZE_Y, (cellArrayDimZ) * CELL_SIZE_Z) + halfH;
   boundaryMax.print();
   domainDim = boundaryMax - boundaryMin;
   double twoH = (2 * H);

@@ -29,6 +29,13 @@
 Main::Main(CkArgMsg* m) {
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
 
+  const std::string out_dir("output");
+  const std::string mkMyDir = std::string("mkdir ") + out_dir;
+  system(mkMyDir.c_str());
+  const std::string rmCmd = std::string("rm ") + out_dir + std::string("/*");
+  system(rmCmd.c_str());
+
+
   //set variable values to a default set
   cellArrayDimX = CELLARRAY_DIM_X;
   cellArrayDimY = CELLARRAY_DIM_Y;
@@ -66,7 +73,7 @@ Main::Main(CkArgMsg* m) {
   boundaryMax.print();
   domainDim = boundaryMax - boundaryMin;
   double twoH = (2 * H);
-  fluidMin = vec3(twoH, twoH, twoH);
+  fluidMin = boundaryMax * 0.5;//vec3(twoH, twoH, twoH);
   fluidMax = vec3(boundaryMax.x, boundaryMax.y, boundaryMax.z) - twoH;
   fluidMax.print();
 

@@ -11,27 +11,33 @@
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
   usesAtSync = true;
+  CkPrintf("fromCell\n");
 
   int numParticlesToAdd = 8;
   double halfH = H / 2;
   double HSquared = H * H;
-  double threeH = 3 * H;
-  vec3 boundaryMin = domainMin + threeH;
-  vec3 boundaryMax = domainMax - threeH;
+  double boundaryThickness = 3 * H;
+  vec3 boundaryMin = domainMin + boundaryThickness;
+  vec3 boundaryMax = domainMax - boundaryThickness;
 
-  int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
+  int myid = thisIndex.z+cellArrayDim.z * (thisIndex.y+thisIndex.x*cellArrayDim.y); 
   myNumParts = 1;
 
-  vec3 center((thisIndex.x * CELL_SIZE_X) + H, (thisIndex.y * CELL_SIZE_Y) + H, (thisIndex.z * CELL_SIZE_Z) + H);
-  vec3 particlesToAdd[8];
-  particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
-  particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
-  particlesToAdd[2] = vec3(center.x + halfH, center.y - halfH, center.z + halfH);
-  particlesToAdd[3] = vec3(center.x + halfH, center.y - halfH, center.z - halfH);
-  particlesToAdd[4] = vec3(center.x - halfH, center.y + halfH, center.z + halfH);
-  particlesToAdd[5] = vec3(center.x - halfH, center.y + halfH, center.z - halfH);
-  particlesToAdd[6] = vec3(center.x - halfH, center.y - halfH, center.z + halfH);
-  particlesToAdd[7] = vec3(center.x - halfH, center.y - halfH, center.z - halfH);
+  vec3 center((thisIndex.x * CELL_SIZE_X) + (0.5 * CELL_SIZE_X), 
+              (thisIndex.y * CELL_SIZE_Y) + (0.5 * CELL_SIZE_Y), 
+              (thisIndex.z * CELL_SIZE_Z) + (0.5 * CELL_SIZE_Z));
+
+        double mDist = MarkDistMult * H; // Markers initial distance
+        const int numParticlesToAdd = CELL_SIZE_X * CELL_SIZE_Y * CELL_SIZE_XZ / (mDist * mDist * mDist); 
+        vec3 particlesToAdd[8];
+        particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
+        particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
+        particlesToAdd[2] = vec3(center.x + halfH, center.y - halfH, center.z + halfH);
+        particlesToAdd[3] = vec3(center.x + halfH, center.y - halfH, center.z - halfH);
+        particlesToAdd[4] = vec3(center.x - halfH, center.y + halfH, center.z + halfH);
+        particlesToAdd[5] = vec3(center.x - halfH, center.y + halfH, center.z - halfH);
+        particlesToAdd[6] = vec3(center.x - halfH, center.y - halfH, center.z + halfH);
+        particlesToAdd[7] = vec3(center.x - halfH, center.y - halfH, center.z - halfH);
 
   for(int i = 0;i < numParticlesToAdd;i++)
   {
@@ -143,7 +149,7 @@ void Cell::sendPositions() {
   unsigned int len = particles.size();
   //create the particle and control message to be sent to computes
   ParticleDataMsg* msg = new (len) ParticleDataMsg(thisIndex.x, thisIndex.y, thisIndex.z, len);
-  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
   // Create a messahe with all the particles in the cell. Calculate the pressure of fluid particles
   // before sending the message.
@@ -161,7 +167,7 @@ void Cell::sendPositions() {
 
 void Cell::writeCell(int stepCount)
 {
-    int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
     std::stringstream ssParticles;
     ssParticles << "x,";
@@ -202,7 +208,7 @@ void Cell::writeCell(int stepCount)
 //send the atoms that have moved beyond my cell to neighbors
 void Cell::migrateParticles(int step)
 {
-  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
   int x1, y1, z1;
   std::vector<std::vector<Particle> > outgoing;
@@ -299,12 +305,12 @@ void Cell::limitVelocity(Particle &p) {
 }
 
 Particle& Cell::wrapAround(Particle &p) {
-  if(p.pos.x < CELL_ORIGIN_X) p.pos.x += CELL_SIZE_X*cellArrayDimX;
-  if(p.pos.y < CELL_ORIGIN_Y) p.pos.y += CELL_SIZE_Y*cellArrayDimY;
-  if(p.pos.z < CELL_ORIGIN_Z) p.pos.z += CELL_SIZE_Z*cellArrayDimZ;
-  if(p.pos.x > CELL_ORIGIN_X + CELL_SIZE_X*cellArrayDimX) p.pos.x -= CELL_SIZE_X*cellArrayDimX;
-  if(p.pos.y > CELL_ORIGIN_Y + CELL_SIZE_Y*cellArrayDimY) p.pos.y -= CELL_SIZE_Y*cellArrayDimY;
-  if(p.pos.z > CELL_ORIGIN_Z + CELL_SIZE_Z*cellArrayDimZ) p.pos.z -= CELL_SIZE_Z*cellArrayDimZ;
+  if(p.pos.x < CELL_ORIGIN_X) p.pos.x += CELL_SIZE_X*cellArrayDim.x;
+  if(p.pos.y < CELL_ORIGIN_Y) p.pos.y += CELL_SIZE_Y*cellArrayDim.y;
+  if(p.pos.z < CELL_ORIGIN_Z) p.pos.z += CELL_SIZE_Z*cellArrayDim.z;
+  if(p.pos.x > CELL_ORIGIN_X + CELL_SIZE_X*cellArrayDim.x) p.pos.x -= CELL_SIZE_X*cellArrayDim.x;
+  if(p.pos.y > CELL_ORIGIN_Y + CELL_SIZE_Y*cellArrayDim.y) p.pos.y -= CELL_SIZE_Y*cellArrayDim.y;
+  if(p.pos.z > CELL_ORIGIN_Z + CELL_SIZE_Z*cellArrayDim.z) p.pos.z -= CELL_SIZE_Z*cellArrayDim.z;
 
   return p;
 }

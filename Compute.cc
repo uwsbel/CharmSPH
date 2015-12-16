@@ -55,8 +55,8 @@ void Compute::selfInteractSPH(ParticleDataMsg *msg){
 void Compute::interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
   CkSectionInfo *handleA = &mcast1;
   CkSectionInfo *handleB = &mcast2;
-  if (msg2->x * cellArrayDimY * cellArrayDimZ + msg2->y * cellArrayDimZ + msg2->z <
-      msg1->x * cellArrayDimY * cellArrayDimZ + msg1->y * cellArrayDimZ + msg1->z)
+  if (msg2->x * cellArrayDim.y * cellArrayDim.z + msg2->y * cellArrayDim.z + msg2->z <
+      msg1->x * cellArrayDim.y * cellArrayDim.z + msg1->y * cellArrayDim.z + msg1->z)
   {
     swap(handleA, handleB);
   }
@@ -78,8 +78,8 @@ void Compute::interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
 // //interaction between two cells
 // void Compute::interact(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
 //   CkSectionInfo *handleA = &mcast1, *handleB = &mcast2;
-//   if (msg2->x * cellArrayDimY * cellArrayDimZ + msg2->y * cellArrayDimZ + msg2->z <
-//       msg1->x * cellArrayDimY * cellArrayDimZ + msg1->y * cellArrayDimZ + msg1->z)
+//   if (msg2->x * cellArrayDim.y * cellArrayDim.z + msg2->y * cellArrayDim.z + msg2->z <
+//       msg1->x * cellArrayDim.y * cellArrayDim.z + msg1->y * cellArrayDim.z + msg1->z)
 //     swap(handleA, handleB);
 
 //   std::vector<vec3> force1, force2;

@@ -6,9 +6,6 @@ mainmodule leanmd {
   readonly CProxy_Compute computeArray; //computational kernels
   readonly CkGroupID mCastGrpID;      //multicast group handle
 
-  readonly int cellArrayDimX;		// X dimension of the Cell array
-  readonly int cellArrayDimY;		// Y dimension of the Cell array
-  readonly int cellArrayDimZ;		// Y dimension of the Cell array
   readonly vec3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;
@@ -22,6 +19,7 @@ mainmodule leanmd {
   readonly int checkptFreq;     // do FT every period
   readonly int checkptStrategy; // choose the checkpoint strategy
   readonly std::string logs;   // log file for checkpointing
+  readonly vec3 cellSize;
 
   //central controller chare
   mainchare [migratable] Main { 
@@ -33,7 +31,7 @@ mainmodule leanmd {
     entry [reductiontarget] void run() {
       serial {
         computeArray.doneInserting();
-        CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDimX*cellArrayDimY*cellArrayDimZ);
+        CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
         CkPrintf("Starting simulation .... \n\n");
         cellArray.run();
         computeArray.run();

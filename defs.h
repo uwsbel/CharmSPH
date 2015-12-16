@@ -42,6 +42,7 @@
 
 #define DT                      (5e-6)
 #define H                       (0.05)
+#define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
 #define MU                      (0.001)
@@ -73,9 +74,9 @@
 #define CELLARRAY_DIM_Z         3
 #define PTP_CUT_OFF             H // cut off for atom to atom interactions
 #define CELL_MARGIN             0  // constant diff between cutoff and cell size
-#define CELL_SIZE_X             (2 * PTP_CUT_OFF)/KAWAY_X // 
-#define CELL_SIZE_Y             (2 * PTP_CUT_OFF)/KAWAY_Y
-#define CELL_SIZE_Z             (2 * PTP_CUT_OFF)/KAWAY_Z
+#define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
+#define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
+#define CELL_SIZEZ             (2 * PTP_CUT_OFF)/KAWAY_Z
 
 
 //variables to control initial uniform placement of atoms;
@@ -93,9 +94,9 @@
 #define DEFAULT_FINALSTEPCOUNT	1001
 #define MAX_VELOCITY		        .1  //in A/fs
 
-#define WRAP_X(a)		(((a) + cellArrayDimX) % cellArrayDimX)
-#define WRAP_Y(a)		(((a) + cellArrayDimY) % cellArrayDimY)
-#define WRAP_Z(a)		(((a) + cellArrayDimZ) % cellArrayDimZ)
+#define WRAP_X(a)		(((a) + cellArrayDim.x) % cellArrayDim.x)
+#define WRAP_Y(a)		(((a) + cellArrayDim.y) % cellArrayDim.y)
+#define WRAP_Z(a)		(((a) + cellArrayDim.z) % cellArrayDim.z)
 
 struct vec3 {
   double x, y, z;
@@ -125,6 +126,12 @@ struct vec3 {
   }
   inline vec3 operator* (const vec3 a) const {
     return vec3(x * a.x, y * a.y, z * a.z);
+  }
+  inline vec3 operator/ (const double a) const {
+    return vec3(x / a, y / a, z / a);
+  }
+  inline vec3 operator/ (const vec3 a) const {
+    return vec3(x / a.x, y / a.y, z / a.z);
   }
   inline vec3 operator- (const vec3& rhs) const {
     return vec3(x - rhs.x, y - rhs.y, z - rhs.z);
@@ -199,9 +206,6 @@ extern /* readonly */ CProxy_Cell cellArray;
 extern /* readonly */ CProxy_Compute computeArray;
 extern /* readonly */ CkGroupID mCastGrpID;
 
-extern /* readonly */ int cellArrayDimX;
-extern /* readonly */ int cellArrayDimY;
-extern /* readonly */ int cellArrayDimZ;
 extern /* readonly */ vec3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;
@@ -211,5 +215,7 @@ extern /* readonly */ vec3 fluidMax;
 extern /* readonly */ int finalStepCount;
 extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
+extern                vec3 cellSize;
+extern                vec3 mDist;
 
 #endif

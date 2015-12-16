@@ -3,3 +3,5 @@ output
 leanmd.decl.h
 leanmd.def.h
 charmrun
+remote-sync.sh
+

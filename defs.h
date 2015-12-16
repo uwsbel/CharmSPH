@@ -40,7 +40,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-7)
+#define DT                      (5e-6)
 #define H                       (0.05)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
@@ -53,14 +53,29 @@
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
+#define MIN_X 0
+#define MIN_Y 0
+#define MIN_Z 0
+#define MAX_X 1
+#define MAX_Y 1
+#define MAX_Z 1
+#define FLUIDMIN_X 3 * H
+#define FLUIDMIN_Y 3 * H
+#define FLUIDMIN_Z 3 * H
+#define FLUIDMAX_X 15 * H
+#define FLUIDMAX_Y 15 * H
+#define FLUIDMAX_Z 15 * H
+
+
+
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
 #define PTP_CUT_OFF             H // cut off for atom to atom interactions
 #define CELL_MARGIN             0  // constant diff between cutoff and cell size
-#define CELL_SIZE_X             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_X // 
-#define CELL_SIZE_Y             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Y
-#define CELL_SIZE_Z             (2 * PTP_CUT_OFF + CELL_MARGIN)/KAWAY_Z
+#define CELL_SIZE_X             (2 * PTP_CUT_OFF)/KAWAY_X // 
+#define CELL_SIZE_Y             (2 * PTP_CUT_OFF)/KAWAY_Y
+#define CELL_SIZE_Z             (2 * PTP_CUT_OFF)/KAWAY_Z
 
 
 //variables to control initial uniform placement of atoms;
@@ -187,8 +202,9 @@ extern /* readonly */ CkGroupID mCastGrpID;
 extern /* readonly */ int cellArrayDimX;
 extern /* readonly */ int cellArrayDimY;
 extern /* readonly */ int cellArrayDimZ;
-extern /* readonly */ vec3 boundaryMin;
-extern /* readonly */ vec3 boundaryMax;
+extern /* readonly */ vec3 cellArrayDim;
+extern /* readonly */ vec3 domainMin;
+extern /* readonly */ vec3 domainMax;
 extern /* readonly */ vec3 domainDim;
 extern /* readonly */ vec3 fluidMin;
 extern /* readonly */ vec3 fluidMax;

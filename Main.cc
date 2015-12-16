@@ -13,8 +13,9 @@
 /* readonly */ int cellArrayDimX;
 /* readonly */ int cellArrayDimY;
 /* readonly */ int cellArrayDimZ;
-/* readonly */ vec3 boundaryMin;
-/* readonly */ vec3 boundaryMax;
+/* readonly */ vec3 cellArrayDim;
+/* readonly */ vec3 domainMin;
+/* readonly */ vec3 domainMax;
 /* readonly */ vec3 domainDim;
 /* readonly */ vec3 fluidMin;
 /* readonly */ vec3 fluidMax;
@@ -35,12 +36,6 @@ Main::Main(CkArgMsg* m) {
   const std::string rmCmd = std::string("rm ") + out_dir + std::string("/*");
   system(rmCmd.c_str());
 
-
-  //set variable values to a default set
-  cellArrayDimX = CELLARRAY_DIM_X;
-  cellArrayDimY = CELLARRAY_DIM_Y;
-  cellArrayDimZ = CELLARRAY_DIM_Z;
-
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
   ldbPeriod = DEFAULT_LDB_PERIOD;
@@ -57,26 +52,38 @@ Main::Main(CkArgMsg* m) {
   int currPe = -1, pe;
   int cur_arg = 1;
 
-  CkPrintf("\nInput Parameters...\n");
-
   //read user parameters
   //number of cells in each dimension
-  if (m->argc > cur_arg) {
-    cellArrayDimX=atoi(m->argv[cur_arg++]);
-    cellArrayDimY=atoi(m->argv[cur_arg++]);
-    cellArrayDimZ=atoi(m->argv[cur_arg++]);
-    CkPrintf("Cell Array Dimension X:%d Y:%d Z:%d of size %f %f %f\n",cellArrayDimX,cellArrayDimY,cellArrayDimZ,CELL_SIZE_X,CELL_SIZE_Y,CELL_SIZE_Z);
-  }
-  double halfH = H/2;
-  boundaryMin = vec3(-halfH,-halfH,-halfH);
-  boundaryMax = vec3((cellArrayDimX) * CELL_SIZE_X, (cellArrayDimY) * CELL_SIZE_Y, (cellArrayDimZ) * CELL_SIZE_Z) + halfH;
-  boundaryMax.print();
-  domainDim = boundaryMax - boundaryMin;
-  double twoH = (2 * H);
-  fluidMin = boundaryMax * 0.5;
-  fluidMax = vec3(boundaryMax.x, boundaryMax.y, boundaryMax.z) - twoH;
-  fluidMax.print();
+  domainMin = vec3(MIN_X, MIN_Y, MIN_Z);
+  domainMax = vec3(MAX_X, MAX_Y, MAX_Z);
+  fluidMin = vec3(FLUIDMIN_X, FLUIDMIN_Y, FLUIDMIN_Z);
+  fluidMax = vec3(FLUIDMAX_X, FLUIDMAX_Y, FLUIDMAX_Z);
 
+  if (m->argc > cur_arg) {
+    domainDim.x=atoi(m->argv[cur_arg++]);
+    domainDim.y=atoi(m->argv[cur_arg++]);
+    domainDim.z=atoi(m->argv[cur_arg++]);
+    domainMax = domainDim;
+  }
+
+
+  //set variable values to a default set
+  cellArrayDimX = ceil(domainMax.x / (CELL_SIZE_X));
+  cellArrayDimY = ceil(domainMax.y / (CELL_SIZE_Y));
+  cellArrayDimZ = ceil(domainMax.z / (CELL_SIZE_Z));
+  cellArrayDim = vec3(cellArrayDimX,cellArrayDimY,cellArrayDimZ);
+  
+  // Fix domain max
+  domainMax.x = (cellArrayDimX * CELL_SIZE_X);
+  domainMax.y = (cellArrayDimY * CELL_SIZE_Y);
+  domainMax.z = (cellArrayDimZ * CELL_SIZE_Z);
+  domainMax.print();
+
+  domainDim = domainMax - domainMin;
+
+
+  CkPrintf("\nInput Parameters...\n");
+  
   //number of steps in simulation
   if (m->argc > cur_arg) {
     finalStepCount=atoi(m->argv[cur_arg++]);

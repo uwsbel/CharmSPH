@@ -9,8 +9,9 @@ mainmodule leanmd {
   readonly int cellArrayDimX;		// X dimension of the Cell array
   readonly int cellArrayDimY;		// Y dimension of the Cell array
   readonly int cellArrayDimZ;		// Y dimension of the Cell array
-  readonly vec3 boundaryMin;
-  readonly vec3 boundaryMax;
+  readonly vec3 cellArrayDim;   // Y dimension of the Cell array
+  readonly vec3 domainMin;
+  readonly vec3 domainMax;
   readonly vec3 fluidMin;
   readonly vec3 fluidMax;
 
@@ -87,7 +88,7 @@ mainmodule leanmd {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0)
+          if((stepCount % 200) == 0)
           {
             writeCell(stepCount);
             //sendSize(); // ReceveSize

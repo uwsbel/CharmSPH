@@ -15,10 +15,14 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   int numParticlesToAdd = 8;
   double halfH = H / 2;
   double HSquared = H * H;
+  double threeH = 3 * H;
+  vec3 boundaryMin = domainMin + threeH;
+  vec3 boundaryMax = domainMax - threeH;
 
   int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
   myNumParts = 1;
-  vec3 center((thisIndex.x * 2 * H) + H, (thisIndex.y * 2 * H) + H, (thisIndex.z * 2 * H) + H);
+
+  vec3 center((thisIndex.x * CELL_SIZE_X) + H, (thisIndex.y * CELL_SIZE_Y) + H, (thisIndex.z * CELL_SIZE_Z) + H);
   vec3 particlesToAdd[8];
   particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
   particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
@@ -39,17 +43,19 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
     p.rho = RHO0;
     p.pressure = BOUNDARY_PRESSURE;
     /* Set as lower or top boundary particle (above and below z plane)*/
-    if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
-       (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-       (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
+    if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
+       (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
+       (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
     {
-      p.typeOfParticle = -1; // fluid Marker
-      p.pressure = Eos(p.rho);
+      p.typeOfParticle = 0; // Boundary Marker
       particles.push_back(p);
     }
-    else
+    else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+            (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
+            (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
     {
-      p.typeOfParticle = 0; // Boundary
+      p.typeOfParticle = -1; // Fluid Marker
+      p.pressure = Eos(p.rho);
       particles.push_back(p);  
     }
   }
@@ -253,30 +259,7 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) {
   else if (p.pos.z > (z+CELL_SIZE_Z)) pz = 1;
 }
 
-// // Function to update properties (i.e. acceleration, velocity and position) in particles
-// void Cell::updateProperties(vec3 *forces) {
-//   int i;
-//   double powTen, powTwenty, realTimeDeltaVel, invMassParticle;
-//   powTen = pow(10.0, 10);
-//   powTwenty = pow(10.0, -20);
-//   realTimeDeltaVel = DEFAULT_DELTA * powTwenty;
-//   for(i = 0; i < particles.size(); i++) {
-//     //calculate energy only in begining and end
-//     if(stepCount == 1) {
-//       energy[0] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen); // in milliJoules
-//     } else if(stepCount == finalStepCount) { 
-//       energy[1] += (0.5 * particles[i].mass * dot(particles[i].vel, particles[i].vel) * powTen);
-//     }
-//     // applying kinetic equations
-//     invMassParticle = 1 / particles[i].mass;
-//     particles[i].acc = forces[i] * invMassParticle; // in m/sec^2
-//     particles[i].vel += particles[i].acc * realTimeDeltaVel; // in A/fs
 
-//     limitVelocity(particles[i]);
-//     particles[i].pos += particles[i].vel * DEFAULT_DELTA; // in A
-
-//   }
-// }
 
 // Function to update properties (i.e. acceleration, velocity and position) in particles
 void Cell::updatePropertiesSPH(vec4 *dVel_dRho) 
@@ -285,10 +268,14 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
 
   for(i = 0; i < particles.size(); i++) 
   {
-    particles[i].acc = dVel_dRho[i].r;
+    if(particles[i].typeOfParticle == -1)
+    {
+      particles[i].acc = dVel_dRho[i].r;
+      particles[i].acc.y = particles[i].acc.y - 9.81;
+    }
     particles[i].dRho = dVel_dRho[i].l;
 
-    particles[i].vel += dVel_dRho[i].r * DT;; 
+    particles[i].vel += particles[i].acc * DT;; 
     particles[i].pos += particles[i].vel * DT;
     particles[i].rho += dVel_dRho[i].l * DT;
   }

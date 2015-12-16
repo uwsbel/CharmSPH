@@ -271,7 +271,11 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
     if(particles[i].typeOfParticle == -1)
     {
       particles[i].acc = dVel_dRho[i].r;
-      particles[i].acc.y = particles[i].acc.y - 9.81;
+      particles[i].acc.y = particles[i].acc.y - 1;
+    }
+    else
+    {
+      particles[i].acc = vec3(0,0,0);
     }
     particles[i].dRho = dVel_dRho[i].l;
 

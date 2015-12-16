@@ -60,7 +60,6 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
     }
   }
 
-
   energy[0] = energy[1] = 0;
   setMigratable(false);
 }
@@ -76,6 +75,7 @@ Cell::~Cell() {}
 
 //function to create my computes
 void Cell::createComputes() {
+  printf("testCell\n");
   int x = thisIndex.x, y = thisIndex.y, z = thisIndex.z;
   int px1, py1, pz1, dx, dy, dz, px2, py2, pz2;
 

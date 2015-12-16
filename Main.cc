@@ -66,7 +66,7 @@ Main::Main(CkArgMsg* m) {
   boundaryMax.print();
   domainDim = boundaryMax - boundaryMin;
   double twoH = (2 * H);
-  fluidMin = vec3(twoH, twoH, twoH);
+  fluidMin = boundaryMax * 0.5;
   fluidMax = vec3(boundaryMax.x, boundaryMax.y, boundaryMax.z) - twoH;
   fluidMax.print();
 

@@ -45,20 +45,8 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
     {
       p.typeOfParticle = -1; // fluid Marker
       p.pressure = Eos(p.rho);
-
       particles.push_back(p);
     }
-    /* */
-    // else if(p.pos.x > fluidMin.x || p.pos.x < fluidMax.x)
-    // {
-    //   p.typeOfParticle = 0;
-    //   particles.push_back(p);
-    // }
-    // else if(p.pos.y <= fluidMin.y || p.pos.y >= fluidMax.y)
-    // {
-    //   p.typeOfParticle = 0;
-    //   particles.push_back(p);  
-    // }
     else
     {
       p.typeOfParticle = 0; // Boundary

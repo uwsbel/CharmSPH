@@ -23,12 +23,12 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   int myid = thisIndex.z+cellArrayDim.z * (thisIndex.y+thisIndex.x*cellArrayDim.y); 
   myNumParts = 1;
 
-  vec3 center((thisIndex.x * CELL_SIZE_X) + (0.5 * CELL_SIZE_X), 
-              (thisIndex.y * CELL_SIZE_Y) + (0.5 * CELL_SIZE_Y), 
-              (thisIndex.z * CELL_SIZE_Z) + (0.5 * CELL_SIZE_Z));
+  vec3 center((thisIndex.x * cellSize.x) + (0.5 * cellSize.x), 
+              (thisIndex.y * cellSize.y) + (0.5 * cellSize.y), 
+              (thisIndex.z * cellSize.z) + (0.5 * cellSize.z));
 
         double mDist = MarkDistMult * H; // Markers initial distance
-        const int numParticlesToAdd = CELL_SIZE_X * CELL_SIZE_Y * CELL_SIZE_XZ / (mDist * mDist * mDist); 
+        const int numParticlesToAdd = cellSize.x * cellSize.y * cellSize.xZ / (mDist * mDist * mDist); 
         vec3 particlesToAdd[8];
         particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
         particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
@@ -131,7 +131,8 @@ void Cell::createComputes() {
 }
 
 //call multicast section creation
-void Cell::createSection() {
+void Cell::createSection() 
+{
   //knit the computes into a section
   mCastSecProxy = CProxySection_Compute::ckNew(computeArray.ckGetArrayID(), &computesList[0], computesList.size());
 
@@ -145,13 +146,13 @@ void Cell::createSection() {
 }
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
-void Cell::sendPositions() {
+void Cell::sendPositions() 
+{
   unsigned int len = particles.size();
   //create the particle and control message to be sent to computes
   ParticleDataMsg* msg = new (len) ParticleDataMsg(thisIndex.x, thisIndex.y, thisIndex.z, len);
-  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
-  // Create a messahe with all the particles in the cell. Calculate the pressure of fluid particles
+  // Create a message with all the particles in the cell. Calculate the pressure of fluid particles
   // before sending the message.
   for(int i = 0; i < len; ++i)
   {
@@ -242,27 +243,22 @@ void Cell::migrateParticles(int step)
 }
 
 //check if the particle is to be moved
-void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) {
-  double x = thisIndex.x * CELL_SIZE_X + CELL_ORIGIN_X;
-  double y = thisIndex.y * CELL_SIZE_Y + CELL_ORIGIN_Y;
-  double z = thisIndex.z * CELL_SIZE_Z + CELL_ORIGIN_Z;
+void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) 
+{
+  // x, y, z give the coordinates of the bottom left part of the cell
+  double x = thisIndex.x * cellSize.x + domainMin.x;
+  double y = thisIndex.y * cellSize.y + domainMin.y;
+  double z = thisIndex.z * cellSize.z + domainMin.z;
   px = py = pz = 0;
 
-  // We dont need -2 checka and 2 check
-  //if (p.pos.x < (x-CELL_SIZE_X)) px = -2;
   if (p.pos.x < x) px = -1;
-  //else if (p.pos.x > (x+2*CELL_SIZE_X)) px = 2;
-  else if (p.pos.x > (x+CELL_SIZE_X)) px = 1;
+  else if (p.pos.x > (x+cellSize.x)) px = 1;
 
-  //if (p.pos.y < (y-CELL_SIZE_Y)) py = -2;
   if (p.pos.y < y) py = -1;
-  //else if (p.pos.y > (y+2*CELL_SIZE_Y)) py = 2;
-  else if (p.pos.y > (y+CELL_SIZE_Y)) py = 1;
+  else if (p.pos.y > (y+cellSize.y)) py = 1;
 
-  //if (p.pos.z < (z-CELL_SIZE_Z)) pz = -2;
   if (p.pos.z < z) pz = -1;
-  //else if (p.pos.z > (z+2*CELL_SIZE_Z)) pz = 2;
-  else if (p.pos.z > (z+CELL_SIZE_Z)) pz = 1;
+  else if (p.pos.z > (z+cellSize.z)) pz = 1;
 }
 
 
@@ -287,30 +283,35 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
   }
 }
 
-inline double velocityCheck(double inVelocity) {
-  if(fabs(inVelocity) > MAX_VELOCITY) {
-    if(inVelocity < 0.0 )
-      return -MAX_VELOCITY;
-    else
-      return MAX_VELOCITY;
-  } else {
+inline double velocityCheck(double inVelocity) 
+{
+  if(fabs(inVelocity) > MAX_VELOCITY) 
+  {
+    if(inVelocity < 0.0 ) return -MAX_VELOCITY;
+    else return MAX_VELOCITY;
+  } 
+  else 
+  {
     return inVelocity;
   }
 }
 
-void Cell::limitVelocity(Particle &p) {
+void Cell::limitVelocity(Particle &p) 
+{
   p.vel.x = velocityCheck(p.vel.x);
   p.vel.y = velocityCheck(p.vel.y);
   p.vel.z = velocityCheck(p.vel.z);
 }
 
-Particle& Cell::wrapAround(Particle &p) {
-  if(p.pos.x < CELL_ORIGIN_X) p.pos.x += CELL_SIZE_X*cellArrayDim.x;
-  if(p.pos.y < CELL_ORIGIN_Y) p.pos.y += CELL_SIZE_Y*cellArrayDim.y;
-  if(p.pos.z < CELL_ORIGIN_Z) p.pos.z += CELL_SIZE_Z*cellArrayDim.z;
-  if(p.pos.x > CELL_ORIGIN_X + CELL_SIZE_X*cellArrayDim.x) p.pos.x -= CELL_SIZE_X*cellArrayDim.x;
-  if(p.pos.y > CELL_ORIGIN_Y + CELL_SIZE_Y*cellArrayDim.y) p.pos.y -= CELL_SIZE_Y*cellArrayDim.y;
-  if(p.pos.z > CELL_ORIGIN_Z + CELL_SIZE_Z*cellArrayDim.z) p.pos.z -= CELL_SIZE_Z*cellArrayDim.z;
+Particle& Cell::wrapAround(Particle &p) 
+{
+  if(p.pos.x < domainMin.x) p.pos.x += domainDim.x;
+  if(p.pos.y < domainMin.y) p.pos.y += domainDim.y;
+  if(p.pos.z < domainMin.z) p.pos.z += domainDim.z;
+
+  if(p.pos.x > domainMax.x) p.pos.x -= domainDim.x;
+  if(p.pos.y > domainMax.y) p.pos.y -= domainDim.y;
+  if(p.pos.z > domainMax.z) p.pos.z -= domainDim.z;
 
   return p;
 }

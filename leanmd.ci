@@ -1,18 +1,23 @@
 mainmodule leanmd {
   include "pup_stl.h";
 
+  /* Charm++ Globals */
   readonly CProxy_Main mainProxy;       //central controller
   readonly CProxy_Cell cellArray;     //array that houses atoms
   readonly CProxy_Compute computeArray; //computational kernels
   readonly CkGroupID mCastGrpID;      //multicast group handle
-
+  
+  /* SPH  Globals */
   readonly vec3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;
+  readonly vec3 domainDim;
   readonly vec3 fluidMin;
   readonly vec3 fluidMax;
+  readonly vec3 cellSize;
+  readonly vec3 mDist;
 
-
+  /* Charm++ RTS Globals */
   readonly int finalStepCount;		// number of steps in the simulaion
   readonly int firstLdbStep;		// begin load balancing after this many steps
   readonly int ldbPeriod;		// load balancing period

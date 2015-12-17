@@ -6,27 +6,29 @@
 #include "Compute.h"
 #include <iostream>
 
+/* Charm++ Globals */
 /* readonly */ CProxy_Main mainProxy;
 /* readonly */ CProxy_Cell cellArray;
 /* readonly */ CProxy_Compute computeArray;
 /* readonly */ CkGroupID mCastGrpID;
 
+/* SPH Globals */
 /* readonly */ vec3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
 /* readonly */ vec3 domainDim;
 /* readonly */ vec3 fluidMin;
 /* readonly */ vec3 fluidMax;
+/* readonly */ vec3 cellSize;
+/* readonly */ vec3 mDist;
+
+/* Charm++ RTS Globals */
 /* readonly */ int finalStepCount; 
 /* readonly */ int firstLdbStep; 
 /* readonly */ int ldbPeriod;
 /* readonly */ int checkptFreq; 
 /* readonly */ int checkptStrategy;
 /* readonly */ std::string logs;      
-              vec3 cellSize;
-              vec3 mDist;
-
-
 
 // Entry point of Charm++ application
 Main::Main(CkArgMsg* m) {

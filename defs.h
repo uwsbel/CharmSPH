@@ -201,21 +201,25 @@ PUPbytes(Particle);
 
 #include "leanmd.decl.h"
 
+/* Charm++ Globals */
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Cell cellArray;
 extern /* readonly */ CProxy_Compute computeArray;
 extern /* readonly */ CkGroupID mCastGrpID;
 
+/* SPH Globals */
 extern /* readonly */ vec3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;
 extern /* readonly */ vec3 domainDim;
 extern /* readonly */ vec3 fluidMin;
 extern /* readonly */ vec3 fluidMax;
+extern /* readonly */ vec3 cellSize;
+extern /* readonly */ vec3 mDist;
+
+/* Charm++ Runtime System Globals */
 extern /* readonly */ int finalStepCount;
 extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
-extern                vec3 cellSize;
-extern                vec3 mDist;
 
 #endif

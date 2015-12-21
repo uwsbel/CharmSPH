@@ -8,7 +8,7 @@ mainmodule leanmd {
   readonly CkGroupID mCastGrpID;      //multicast group handle
   
   /* SPH  Globals */
-  readonly vec3 cellArrayDim;   // Y dimension of the Cell array
+  readonly int3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;
   readonly vec3 domainDim;
@@ -24,7 +24,6 @@ mainmodule leanmd {
   readonly int checkptFreq;     // do FT every period
   readonly int checkptStrategy; // choose the checkpoint strategy
   readonly std::string logs;   // log file for checkpointing
-  readonly vec3 cellSize;
 
   //central controller chare
   mainchare [migratable] Main { 

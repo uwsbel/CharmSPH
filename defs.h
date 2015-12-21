@@ -98,6 +98,12 @@
 #define WRAP_Y(a)		(((a) + cellArrayDim.y) % cellArrayDim.y)
 #define WRAP_Z(a)		(((a) + cellArrayDim.z) % cellArrayDim.z)
 
+struct int3 {
+  int x, y, z;
+  int3(int d = 0) : x(d), y(d), z(d) { }
+  int3(int x_, int y_, int z_) : x(x_), y(y_), z(z_) { }
+};
+
 struct vec3 {
   double x, y, z;
 
@@ -182,7 +188,7 @@ struct vec4 {
 };
 
 
-
+PUPbytes(int3)
 PUPbytes(vec3)
 PUPbytes(vec4)
 
@@ -208,7 +214,7 @@ extern /* readonly */ CProxy_Compute computeArray;
 extern /* readonly */ CkGroupID mCastGrpID;
 
 /* SPH Globals */
-extern /* readonly */ vec3 cellArrayDim;
+extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;
 extern /* readonly */ vec3 domainDim;
@@ -219,6 +225,9 @@ extern /* readonly */ vec3 mDist;
 
 /* Charm++ Runtime System Globals */
 extern /* readonly */ int finalStepCount;
+//extern /* readonly */ int firstLdbStep; 
+//extern /* readonly */ int ldbPeriod;
+//extern /* readonly */ int checkptFreq; 
 extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
 

@@ -13,7 +13,7 @@
 /* readonly */ CkGroupID mCastGrpID;
 
 /* SPH Globals */
-/* readonly */ vec3 cellArrayDim;
+/* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
 /* readonly */ vec3 domainDim;
@@ -71,6 +71,12 @@ Main::Main(CkArgMsg* m) {
     domainMin = vec3(0, 0, 0);
     domainMax = domainDim;
   }
+
+  cellSize.x = 0.2;
+  cellSize.y = 0.2;
+  cellSize.z = 0.2;
+
+CkPrintf("\nCells: %f X %f X %f .... created\n", domainDim.x, domainDim.y, domainDim.z);
 
   domainDim = domainMax - domainMin;
 
@@ -141,6 +147,7 @@ Main::Main(CkArgMsg* m) {
 
   cellArray.doneInserting();
   std::cin.get();
+  CkPrintf("\nCells: %d X %d X %d .... created\n", cellSize.x, cellSize.y, cellSize.z);
   CkPrintf("\nCells: %d X %d X %d .... created\n", cellArrayDim.x, cellArrayDim.y, cellArrayDim.z);
 
   delete m;

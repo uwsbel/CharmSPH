@@ -20,53 +20,39 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   vec3 boundaryMin = domainMin + boundaryThickness;
   vec3 boundaryMax = domainMax - boundaryThickness;
 
-  int myid = thisIndex.z+cellArrayDim.z * (thisIndex.y+thisIndex.x*cellArrayDim.y); 
+  int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
   myNumParts = 1;
 
-  vec3 center((thisIndex.x * cellSize.x) + (0.5 * cellSize.x), 
-              (thisIndex.y * cellSize.y) + (0.5 * cellSize.y), 
-              (thisIndex.z * cellSize.z) + (0.5 * cellSize.z));
-
-        double mDist = MarkDistMult * H; // Markers initial distance
-        const int numParticlesToAdd = cellSize.x * cellSize.y * cellSize.xZ / (mDist * mDist * mDist); 
-        vec3 particlesToAdd[8];
-        particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
-        particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
-        particlesToAdd[2] = vec3(center.x + halfH, center.y - halfH, center.z + halfH);
-        particlesToAdd[3] = vec3(center.x + halfH, center.y - halfH, center.z - halfH);
-        particlesToAdd[4] = vec3(center.x - halfH, center.y + halfH, center.z + halfH);
-        particlesToAdd[5] = vec3(center.x - halfH, center.y + halfH, center.z - halfH);
-        particlesToAdd[6] = vec3(center.x - halfH, center.y - halfH, center.z + halfH);
-        particlesToAdd[7] = vec3(center.x - halfH, center.y - halfH, center.z - halfH);
-
-  for(int i = 0;i < numParticlesToAdd;i++)
-  {
-    Particle p = Particle();
-    p.pos = particlesToAdd[i];
-    p.vel = vec3(0,0,0);
-    p.acc = vec3(0,0,0);
-    p.mass = PARTICLE_MASS;
-    p.rho = RHO0;
-    p.pressure = BOUNDARY_PRESSURE;
-    /* Set as lower or top boundary particle (above and below z plane)*/
-    if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-       (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-       (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
-    {
-      p.typeOfParticle = 0; // Boundary Marker
-      particles.push_back(p);
-    }
-    else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
-            (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-            (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-    {
-      p.typeOfParticle = -1; // Fluid Marker
-      p.pressure = Eos(p.rho);
-      particles.push_back(p);  
+  vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
+  for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) {
+    for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) {
+      for (double pz = 0.5 * mDist.z; pz < cellSize.z; pz += mDist.z) {
+        Particle p = Particle();
+        p.pos = vec3(px, py, pz) + cellMin;
+        p.vel = vec3(0,0,0);
+        p.acc = vec3(0,0,0);
+        p.mass = PARTICLE_MASS;
+        p.rho = RHO0;
+        p.pressure = BOUNDARY_PRESSURE;
+        /* Set as lower or top boundary particle (above and below z plane)*/
+        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
+           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
+           (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
+        {
+          p.typeOfParticle = 0; // Boundary Marker
+          particles.push_back(p);
+        }
+        else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+                (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
+                (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
+        {
+          p.typeOfParticle = -1; // Fluid Marker
+          p.pressure = Eos(p.rho);
+          particles.push_back(p);  
+        }
+      }
     }
   }
-
-
   energy[0] = energy[1] = 0;
   setMigratable(false);
 }

@@ -75,9 +75,9 @@ Main::Main(CkArgMsg* m) {
   domainDim = domainMax - domainMin;
 
   //set variable values to a default set
-  cellArrayDim.x = floor(domainDim.x / CELL_SIZE_X);
-  cellArrayDim.y = floor(domainDim.y / CELL_SIZE_Y);
-  cellArrayDim.z = floor(domainDim.z / CELL_SIZE_Z);
+  cellArrayDim.x = floor(domainDim.x / cellSize.x);
+  cellArrayDim.y = floor(domainDim.y / cellSize.y);
+  cellArrayDim.z = floor(domainDim.z / cellSize.z);
 
   cellSize.x = domainDim.x / cellArrayDim.x;
   cellSize.y = domainDim.y / cellArrayDim.y;

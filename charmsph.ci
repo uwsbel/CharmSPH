@@ -1,4 +1,4 @@
-mainmodule leanmd {
+mainmodule charmsph {
   include "pup_stl.h";
 
   /* Charm++ Globals */

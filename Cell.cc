@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "defs.h"
-#include "leanmd.decl.h"
+#include "charmsph.decl.h"
 #include "Cell.h"
 #include "ckmulticast.h"
 #include "ckio.h"

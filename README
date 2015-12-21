@@ -13,18 +13,18 @@ Do a make in this folder
 
 TO RUN-
 Either provide no arguments or provide all
-./charmrun +p<Procs> ./leanmd <dimX,dimY,dimZ,steps,firstLBstep,LBPeriod>
-Example - ./charmrun +p8 ./leanmd 2 2 2 1001 20 20
-Example - ./charmrun +p8 ./leanmd 2 2 2 1001 20 20 +balancer RefineLB
+./charmrun +p<Procs> ./charmsph <dimX,dimY,dimZ,steps,firstLBstep,LBPeriod>
+Example - ./charmrun +p8 ./charmsph 2 2 2 1001 20 20
+Example - ./charmrun +p8 ./charmsph 2 2 2 1001 20 20 +balancer RefineLB
 Here is an example on how to use MetaBalancer
-Example - ./charmrun +p8 ./leanmd 2 2 2 1001 10 5 +balancer RefineLB +MetaLB
+Example - ./charmrun +p8 ./charmsph 2 2 2 1001 10 5 +balancer RefineLB +MetaLB
 Here is an example showing how to enable checkpoint and restart
-Example - ./charmrun +p8 ./leanmd 2 2 2 1001 20 20 25 +wp6
+Example - ./charmrun +p8 ./charmsph 2 2 2 1001 20 20 25 +wp6
 Here is an example showing how to enable checkpoint application states, the applications states are stored in directory log
-Example - ./charmrun +p8 ./leanmd 2 2 2 1001 20 20 25 log
+Example - ./charmrun +p8 ./charmsph 2 2 2 1001 20 20 25 log
 
 READ ORDER
-leanmd.ci - contains the most important aspects of the program, look for run()
+charmsph.ci - contains the most important aspects of the program, look for run()
 function for each chare which is called right after constructor call for each
 chare. It contains most of the parallel flow and control flow information.
 

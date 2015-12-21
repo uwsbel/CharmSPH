@@ -205,7 +205,7 @@ struct Particle {
 
 PUPbytes(Particle);
 
-#include "leanmd.decl.h"
+#include "charmsph.decl.h"
 
 /* Charm++ Globals */
 extern /* readonly */ CProxy_Main mainProxy;

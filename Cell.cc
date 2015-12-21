@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "defs.h"
-#include "leanmd.decl.h"
+#include "charmsph.decl.h"
 #include "Cell.h"
 #include "ckmulticast.h"
 #include "ckio.h"
@@ -11,55 +11,48 @@
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
   usesAtSync = true;
+  CkPrintf("fromCell\n");
 
   int numParticlesToAdd = 8;
   double halfH = H / 2;
   double HSquared = H * H;
-  double threeH = 3 * H;
-  vec3 boundaryMin = domainMin + threeH;
-  vec3 boundaryMax = domainMax - threeH;
+  double boundaryThickness = 3 * H;
+  vec3 boundaryMin = domainMin + boundaryThickness;
+  vec3 boundaryMax = domainMax - boundaryThickness;
 
-  int myid = thisIndex.z+cellArrayDimZ*(thisIndex.y+thisIndex.x*cellArrayDimY); 
+  int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
   myNumParts = 1;
 
-  vec3 center((thisIndex.x * CELL_SIZE_X) + H, (thisIndex.y * CELL_SIZE_Y) + H, (thisIndex.z * CELL_SIZE_Z) + H);
-  vec3 particlesToAdd[8];
-  particlesToAdd[0] = vec3(center.x + halfH, center.y + halfH, center.z + halfH);
-  particlesToAdd[1] = vec3(center.x + halfH, center.y + halfH, center.z - halfH);
-  particlesToAdd[2] = vec3(center.x + halfH, center.y - halfH, center.z + halfH);
-  particlesToAdd[3] = vec3(center.x + halfH, center.y - halfH, center.z - halfH);
-  particlesToAdd[4] = vec3(center.x - halfH, center.y + halfH, center.z + halfH);
-  particlesToAdd[5] = vec3(center.x - halfH, center.y + halfH, center.z - halfH);
-  particlesToAdd[6] = vec3(center.x - halfH, center.y - halfH, center.z + halfH);
-  particlesToAdd[7] = vec3(center.x - halfH, center.y - halfH, center.z - halfH);
-
-  for(int i = 0;i < numParticlesToAdd;i++)
-  {
-    Particle p = Particle();
-    p.pos = particlesToAdd[i];
-    p.vel = vec3(0,0,0);
-    p.acc = vec3(0,0,0);
-    p.mass = PARTICLE_MASS;
-    p.rho = RHO0;
-    p.pressure = BOUNDARY_PRESSURE;
-    /* Set as lower or top boundary particle (above and below z plane)*/
-    if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-       (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-       (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
-    {
-      p.typeOfParticle = 0; // Boundary Marker
-      particles.push_back(p);
-    }
-    else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
-            (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-            (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-    {
-      p.typeOfParticle = -1; // Fluid Marker
-      p.pressure = Eos(p.rho);
-      particles.push_back(p);  
+  vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
+  for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) {
+    for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) {
+      for (double pz = 0.5 * mDist.z; pz < cellSize.z; pz += mDist.z) {
+        Particle p = Particle();
+        p.pos = vec3(px, py, pz) + cellMin;
+        p.vel = vec3(0,0,0);
+        p.acc = vec3(0,0,0);
+        p.mass = PARTICLE_MASS;
+        p.rho = RHO0;
+        p.pressure = BOUNDARY_PRESSURE;
+        /* Set as lower or top boundary particle (above and below z plane)*/
+        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
+           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
+           (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
+        {
+          p.typeOfParticle = 0; // Boundary Marker
+          particles.push_back(p);
+        }
+        else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+                (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
+                (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
+        {
+          p.typeOfParticle = -1; // Fluid Marker
+          p.pressure = Eos(p.rho);
+          particles.push_back(p);  
+        }
+      }
     }
   }
-
   energy[0] = energy[1] = 0;
   setMigratable(false);
 }
@@ -125,7 +118,8 @@ void Cell::createComputes() {
 }
 
 //call multicast section creation
-void Cell::createSection() {
+void Cell::createSection() 
+{
   //knit the computes into a section
   mCastSecProxy = CProxySection_Compute::ckNew(computeArray.ckGetArrayID(), &computesList[0], computesList.size());
 
@@ -139,13 +133,13 @@ void Cell::createSection() {
 }
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
-void Cell::sendPositions() {
+void Cell::sendPositions() 
+{
   unsigned int len = particles.size();
   //create the particle and control message to be sent to computes
   ParticleDataMsg* msg = new (len) ParticleDataMsg(thisIndex.x, thisIndex.y, thisIndex.z, len);
-  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
 
-  // Create a messahe with all the particles in the cell. Calculate the pressure of fluid particles
+  // Create a message with all the particles in the cell. Calculate the pressure of fluid particles
   // before sending the message.
   for(int i = 0; i < len; ++i)
   {
@@ -161,7 +155,7 @@ void Cell::sendPositions() {
 
 void Cell::writeCell(int stepCount)
 {
-    int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
     std::stringstream ssParticles;
     ssParticles << "x,";
@@ -202,7 +196,7 @@ void Cell::writeCell(int stepCount)
 //send the atoms that have moved beyond my cell to neighbors
 void Cell::migrateParticles(int step)
 {
-  int id = thisIndex.x + thisIndex.y*cellArrayDimX + thisIndex.z*cellArrayDimX*cellArrayDimY;
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
   int x1, y1, z1;
   std::vector<std::vector<Particle> > outgoing;
@@ -236,27 +230,22 @@ void Cell::migrateParticles(int step)
 }
 
 //check if the particle is to be moved
-void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) {
-  double x = thisIndex.x * CELL_SIZE_X + CELL_ORIGIN_X;
-  double y = thisIndex.y * CELL_SIZE_Y + CELL_ORIGIN_Y;
-  double z = thisIndex.z * CELL_SIZE_Z + CELL_ORIGIN_Z;
+void Cell::migrateToCell(Particle p, int &px, int &py, int &pz) 
+{
+  // x, y, z give the coordinates of the bottom left part of the cell
+  double x = thisIndex.x * cellSize.x + domainMin.x;
+  double y = thisIndex.y * cellSize.y + domainMin.y;
+  double z = thisIndex.z * cellSize.z + domainMin.z;
   px = py = pz = 0;
 
-  // We dont need -2 checka and 2 check
-  //if (p.pos.x < (x-CELL_SIZE_X)) px = -2;
   if (p.pos.x < x) px = -1;
-  //else if (p.pos.x > (x+2*CELL_SIZE_X)) px = 2;
-  else if (p.pos.x > (x+CELL_SIZE_X)) px = 1;
+  else if (p.pos.x > (x+cellSize.x)) px = 1;
 
-  //if (p.pos.y < (y-CELL_SIZE_Y)) py = -2;
   if (p.pos.y < y) py = -1;
-  //else if (p.pos.y > (y+2*CELL_SIZE_Y)) py = 2;
-  else if (p.pos.y > (y+CELL_SIZE_Y)) py = 1;
+  else if (p.pos.y > (y+cellSize.y)) py = 1;
 
-  //if (p.pos.z < (z-CELL_SIZE_Z)) pz = -2;
   if (p.pos.z < z) pz = -1;
-  //else if (p.pos.z > (z+2*CELL_SIZE_Z)) pz = 2;
-  else if (p.pos.z > (z+CELL_SIZE_Z)) pz = 1;
+  else if (p.pos.z > (z+cellSize.z)) pz = 1;
 }
 
 
@@ -285,30 +274,35 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
   }
 }
 
-inline double velocityCheck(double inVelocity) {
-  if(fabs(inVelocity) > MAX_VELOCITY) {
-    if(inVelocity < 0.0 )
-      return -MAX_VELOCITY;
-    else
-      return MAX_VELOCITY;
-  } else {
+inline double velocityCheck(double inVelocity) 
+{
+  if(fabs(inVelocity) > MAX_VELOCITY) 
+  {
+    if(inVelocity < 0.0 ) return -MAX_VELOCITY;
+    else return MAX_VELOCITY;
+  } 
+  else 
+  {
     return inVelocity;
   }
 }
 
-void Cell::limitVelocity(Particle &p) {
+void Cell::limitVelocity(Particle &p) 
+{
   p.vel.x = velocityCheck(p.vel.x);
   p.vel.y = velocityCheck(p.vel.y);
   p.vel.z = velocityCheck(p.vel.z);
 }
 
-Particle& Cell::wrapAround(Particle &p) {
-  if(p.pos.x < CELL_ORIGIN_X) p.pos.x += CELL_SIZE_X*cellArrayDimX;
-  if(p.pos.y < CELL_ORIGIN_Y) p.pos.y += CELL_SIZE_Y*cellArrayDimY;
-  if(p.pos.z < CELL_ORIGIN_Z) p.pos.z += CELL_SIZE_Z*cellArrayDimZ;
-  if(p.pos.x > CELL_ORIGIN_X + CELL_SIZE_X*cellArrayDimX) p.pos.x -= CELL_SIZE_X*cellArrayDimX;
-  if(p.pos.y > CELL_ORIGIN_Y + CELL_SIZE_Y*cellArrayDimY) p.pos.y -= CELL_SIZE_Y*cellArrayDimY;
-  if(p.pos.z > CELL_ORIGIN_Z + CELL_SIZE_Z*cellArrayDimZ) p.pos.z -= CELL_SIZE_Z*cellArrayDimZ;
+Particle& Cell::wrapAround(Particle &p) 
+{
+  if(p.pos.x < domainMin.x) p.pos.x += domainDim.x;
+  if(p.pos.y < domainMin.y) p.pos.y += domainDim.y;
+  if(p.pos.z < domainMin.z) p.pos.z += domainDim.z;
+
+  if(p.pos.x > domainMax.x) p.pos.x -= domainDim.x;
+  if(p.pos.y > domainMax.y) p.pos.y -= domainDim.y;
+  if(p.pos.z > domainMax.z) p.pos.z -= domainDim.z;
 
   return p;
 }

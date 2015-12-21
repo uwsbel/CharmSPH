@@ -79,7 +79,7 @@ inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, in
   force2.resize(secondLen);
   //check for wrap around and adjust locations accordingly
   if (abs(first->x - second->x) > 1){
-    diff = CELL_SIZE_X * cellArrayDimX;
+    diff = cellSize.x * cellArrayDim.x;
     if (second->x < first->x){
       diff = -1 * diff; 
     }
@@ -87,14 +87,14 @@ inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, in
       first->part[i].pos.x += diff;
   }
   if (abs(first->y - second->y) > 1){
-    diff = CELL_SIZE_Y * cellArrayDimY;
+    diff = cellSize.y * cellArrayDim.y;
     if (second->y < first->y)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
       first->part[i].pos.y += diff;
   }
   if (abs(first->z - second->z) > 1){
-    diff = CELL_SIZE_Z * cellArrayDimZ;
+    diff = cellSize.z * cellArrayDim.z;
     if (second->z < first->z)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)

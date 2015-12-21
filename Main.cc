@@ -4,27 +4,31 @@
 #include "Main.h"
 #include "Cell.h"
 #include "Compute.h"
+#include <iostream>
 
+/* Charm++ Globals */
 /* readonly */ CProxy_Main mainProxy;
 /* readonly */ CProxy_Cell cellArray;
 /* readonly */ CProxy_Compute computeArray;
 /* readonly */ CkGroupID mCastGrpID;
 
-/* readonly */ int cellArrayDimX;
-/* readonly */ int cellArrayDimY;
-/* readonly */ int cellArrayDimZ;
-/* readonly */ vec3 cellArrayDim;
+/* SPH Globals */
+/* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
 /* readonly */ vec3 domainDim;
 /* readonly */ vec3 fluidMin;
 /* readonly */ vec3 fluidMax;
+/* readonly */ vec3 cellSize;
+/* readonly */ vec3 mDist;
+
+/* Charm++ RTS Globals */
 /* readonly */ int finalStepCount; 
 /* readonly */ int firstLdbStep; 
 /* readonly */ int ldbPeriod;
 /* readonly */ int checkptFreq; 
 /* readonly */ int checkptStrategy;
-/* readonly */ std::string logs;
+/* readonly */ std::string logs;      
 
 // Entry point of Charm++ application
 Main::Main(CkArgMsg* m) 
@@ -61,28 +65,41 @@ Main::Main(CkArgMsg* m)
   fluidMin = vec3(FLUIDMIN_X, FLUIDMIN_Y, FLUIDMIN_Z);
   fluidMax = vec3(FLUIDMAX_X, FLUIDMAX_Y, FLUIDMAX_Z);
 
-  if (m->argc > cur_arg) 
-  {
+  if (m->argc > cur_arg) {
+    // assume domainMin is (0, 0, 0)
     domainDim.x=atof(m->argv[cur_arg++]);
     domainDim.y=atof(m->argv[cur_arg++]);
     domainDim.z=atof(m->argv[cur_arg++]);
+    domainMin = vec3(0, 0, 0);
     domainMax = domainDim;
   }
 
-  //set variable values to a default set
-  cellArrayDimX = floor(domainMax.x / (CELL_SIZE_X));
-  cellArrayDimY = floor(domainMax.y / (CELL_SIZE_Y));
-  cellArrayDimZ = floor(domainMax.z / (CELL_SIZE_Z));
-  cellArrayDim = vec3(cellArrayDimX,cellArrayDimY,cellArrayDimZ);
-  
-  // Fix domain max
-  domainMax.x = (cellArrayDimX * CELL_SIZE_X);
-  domainMax.y = (cellArrayDimY * CELL_SIZE_Y);
-  domainMax.z = (cellArrayDimZ * CELL_SIZE_Z);
-  domainMax.print();
+  cellSize.x = 0.2;
+  cellSize.y = 0.2;
+  cellSize.z = 0.2;
+
 
   domainDim = domainMax - domainMin;
 
+  //set variable values to a default set
+  cellArrayDim.x = floor(domainDim.x / cellSize.x);
+  cellArrayDim.y = floor(domainDim.y / cellSize.y);
+  cellArrayDim.z = floor(domainDim.z / cellSize.z);
+
+  cellSize.x = domainDim.x / cellArrayDim.x;
+  cellSize.y = domainDim.y / cellArrayDim.y;
+  cellSize.z = domainDim.z / cellArrayDim.z;
+
+  // tune particle spacing based on cell size
+  mDist = vec3(1, 1, 1) * MarkDistMult * H;
+
+  int cNX = ceil(cellSize.x / mDist.x);
+  int cNY = ceil(cellSize.y / mDist.y);
+  int cNZ = ceil(cellSize.z / mDist.z);
+
+  mDist.x = cellSize.x / cNX;
+  mDist.y = cellSize.y / cNY;
+  mDist.z = cellSize.z / cNZ;
 
   CkPrintf("\nInput Parameters...\n");
   
@@ -125,23 +142,18 @@ Main::Main(CkArgMsg* m)
   cellArray = CProxy_Cell::ckNew();
   //initializing the 3D Patch array (with a uniform distribution) and 6D compute array
   int patchCount = 0;
-  float ratio = ((float)CkNumPes() - 1)/(cellArrayDimX*cellArrayDimY*cellArrayDimZ);
+  float ratio = ((float)CkNumPes() - 1)/(cellArrayDim.x*cellArrayDim.y*cellArrayDim.z);
   computeArray = CProxy_Compute::ckNew();
-  for (int x=0; x<cellArrayDimX; x++)
-  {
-    for (int y=0; y<cellArrayDimY; y++)
-    {
-      for (int z=0; z<cellArrayDimZ; z++) 
-      {
+
+  for (int x=0; x<cellArrayDim.x; x++) {
+    for (int y=0; y<cellArrayDim.y; y++) {
+      for (int z=0; z<cellArrayDim.z; z++) {
         cellArray(x, y, z).insert((int)(patchCount++ * ratio));
         cellArray(x, y, z).createComputes();
       }
     }
   }
   cellArray.doneInserting();
-
-  CkPrintf("\nCells: %d X %d X %d .... created\n", cellArrayDimX, cellArrayDimY, cellArrayDimZ);
-
   delete m;
 }
 
@@ -157,4 +169,4 @@ void Main::pup(PUP::er &p)
   __sdag_pup(p);
 }
 
-#include "leanmd.def.h"
+#include "charmsph.def.h"

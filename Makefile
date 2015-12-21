@@ -13,26 +13,26 @@ DECL=-DCMK_MEM_CHECKPOINT=1
 FT=-syncft
 endif
 
-all: leanmd
+all: charmsph
 
-leanmd: Main.o Cell.o Compute.o leanmd.decl.h
+charmsph: Main.o Cell.o Compute.o charmsph.decl.h
 	$(CHARMC) $(OPTS) -module CkMulticast -module CommonLBs \
-	-language charm++ -o leanmd$(SUFFIX) Main.o Cell.o Compute.o
+	-language charm++ -o charmsph$(SUFFIX) Main.o Cell.o Compute.o
 
-Main.o: Main.cc Main.h leanmd.decl.h defs.h
+Main.o: Main.cc Main.h charmsph.decl.h defs.h
 	$(CHARMC) $(OPTS) -o Main.o Main.cc
 
-Cell.o: Cell.cc Cell.h leanmd.decl.h defs.h
+Cell.o: Cell.cc Cell.h charmsph.decl.h defs.h
 	$(CHARMC) $(OPTS) -o Cell.o Cell.cc
 
-leanmd.decl.h:	leanmd.ci
-	$(CHARMC) -E leanmd.ci $(DECL)
+charmsph.decl.h:	charmsph.ci
+	$(CHARMC) -E charmsph.ci $(DECL)
 
-Compute.o: Compute.cc Compute.h leanmd.decl.h defs.h physics.h
+Compute.o: Compute.cc Compute.h charmsph.decl.h defs.h physics.h
 	$(CHARMC) $(OPTS) -o Compute.o Compute.cc
 
-test: leanmd
-	./charmrun +p4 ./leanmd 4 4 4 10 3 3 +balancer GreedyLB +LBDebug 1 ++local
+test: charmsph
+	./charmrun +p4 ./charmsph 4 4 4 10 3 3 +balancer GreedyLB +LBDebug 1 ++local
 
 clean:
-	rm -f *.decl.h *.def.h *.o leanmd leanmd-ft leanmd.prj charmrun
+	rm -f *.decl.h *.def.h *.o charmsph charmsph-ft charmsph.prj charmrun

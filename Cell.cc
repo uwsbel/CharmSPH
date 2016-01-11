@@ -11,7 +11,6 @@
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
   usesAtSync = true;
-  CkPrintf("fromCell\n");
 
   int numParticlesToAdd = 8;
   double halfH = H / 2;
@@ -74,7 +73,6 @@ Cell::~Cell() {}
 
 //function to create my computes
 void Cell::createComputes() {
-  printf("testCell\n");
   int x = thisIndex.x, y = thisIndex.y, z = thisIndex.z;
   int px1, py1, pz1, dx, dy, dz, px2, py2, pz2;
 
@@ -178,6 +176,8 @@ void Cell::writeCell(int stepCount)
     for(int i = 0;i < particles.size();i++)
     {
       Particle p = particles[i];
+      if(p.typeOfParticle==0)
+      {
       ssParticles << p.pos.x << ',';
       ssParticles << p.pos.y << ',';
       ssParticles << p.pos.z << ',';
@@ -188,6 +188,7 @@ void Cell::writeCell(int stepCount)
       ssParticles << p.mass << ',';
       ssParticles << p.typeOfParticle;
       ssParticles << std::endl;
+      }
     }
 
     std::ofstream fileNameParticles;

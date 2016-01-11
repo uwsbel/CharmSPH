@@ -40,7 +40,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (5e-6)
+#define DT                      (1e-5)
 #define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)

@@ -102,7 +102,7 @@ Main::Main(CkArgMsg* m)
   mDist.y = cellSize.y / cNY;
   mDist.z = cellSize.z / cNZ;
 
-  gravity = vec3(0, 0, 0);
+  gravity = vec3(0, -1, 0);
 
   CkPrintf("\nInput Parameters...\n");
   

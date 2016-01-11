@@ -72,7 +72,7 @@
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
-#define PTP_CUT_OFF             H // cut off for atom to atom interactions
+#define PTP_CUT_OFF             (2 * H) // cut off for atom to atom interactions
 #define CELL_MARGIN             0  // constant diff between cutoff and cell size
 #define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
 #define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
@@ -230,5 +230,6 @@ extern /* readonly */ int finalStepCount;
 //extern /* readonly */ int checkptFreq; 
 extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
+extern /* readonly */ vec3 gravity;
 
 #endif

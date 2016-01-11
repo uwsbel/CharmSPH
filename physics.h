@@ -174,39 +174,22 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
           {
             continue;
           }
-          if (typeOfParticle_i < 0  ||  typeOfParticle_j < 0) 
-          {
-
-            double multViscosity = 1.0;
-
-            if ( typeOfParticle_i >= 0 ) 
-            { //**one of them is boundary, the other one is fluid
-              multViscosity = MULTVISCOSITY_FSI;
-            }
-            if ( typeOfParticle_j >= 0) 
-            { //**one of them is boundary, the other one is fluid
-              multViscosity = MULTVISCOSITY_FSI;
-            }
-
-            gradW = GradW_Spline(r_ij);
-            double r_ij_dot_gradW = dot(r_ij, gradW);
-            double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
-
-            dVel_ij = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
-
-            dRho_ij = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
-
-            if(typeOfParticle_i < 0)
-            {
-              dVel_dRho1[i].r += dVel_ij;
-              dVel_dRho1[i].l += dRho_ij;         
-            }
-            if(typeOfParticle_j < 0)
-            {
-              dVel_dRho2[j].r -= dVel_ij;
-              dVel_dRho2[j].l -= dRho_ij;         
-            }
+          if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
+            return;
           }
+          double multViscosity = 1.0;
+          gradW = GradW_Spline(r_ij);
+          double r_ij_dot_gradW = dot(r_ij, gradW);
+          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+
+          dVel_ij = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+          dRho_ij = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
+
+          dVel_dRho1[i].r += dVel_ij; 
+          dVel_dRho1[i].l += dRho_ij; 
+
+          dVel_dRho2[j].r -= dVel_ij; 
+          dVel_dRho2[j].l -= dRho_ij; 
         }
       }
     }
@@ -252,35 +235,20 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         {
           continue;
         }
-
-        if (typeOfParticle_i < 0  ||  typeOfParticle_j < 0) 
-        {
-          if (typeOfParticle_i == 0) 
-          {
-            continue;
-          }
-          double multViscosity = 1.0;
-
-          if ( typeOfParticle_i >= 0 ) 
-          { //**one of them is boundary, the other one is fluid
-            multViscosity = MULTVISCOSITY_FSI;
-          }
-          if ( typeOfParticle_j >= 0) 
-          { //**one of them is boundary, the other one is fluid
-            multViscosity = MULTVISCOSITY_FSI;
-          }
-
-          gradW = GradW_Spline(r_ij);
-          double r_ij_dot_gradW = dot(r_ij, gradW);
-          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
-
-          dVel_i = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
-
-          dRho_i = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
-
-          dVel_dRho[i].r += dVel_i;
-          dVel_dRho[i].l += dRho_i;
+        if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
+            return;
         }
+        double multViscosity = 1.0;
+        gradW = GradW_Spline(r_ij);
+        double r_ij_dot_gradW = dot(r_ij, gradW);
+        double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+
+        dVel_i = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+
+        dRho_i = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
+
+        dVel_dRho[i].r += dVel_i;
+        dVel_dRho[i].l += dRho_i;
       }
     } 
   }

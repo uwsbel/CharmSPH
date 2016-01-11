@@ -28,7 +28,8 @@
 /* readonly */ int ldbPeriod;
 /* readonly */ int checkptFreq; 
 /* readonly */ int checkptStrategy;
-/* readonly */ std::string logs;      
+/* readonly */ std::string logs;   
+/* readonly */ vec3 gravity;   
 
 // Entry point of Charm++ application
 Main::Main(CkArgMsg* m) 
@@ -100,6 +101,8 @@ Main::Main(CkArgMsg* m)
   mDist.x = cellSize.x / cNX;
   mDist.y = cellSize.y / cNY;
   mDist.z = cellSize.z / cNZ;
+
+  gravity = vec3(0, 0, 0);
 
   CkPrintf("\nInput Parameters...\n");
   

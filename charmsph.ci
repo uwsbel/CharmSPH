@@ -24,6 +24,7 @@ mainmodule charmsph {
   readonly int checkptFreq;     // do FT every period
   readonly int checkptStrategy; // choose the checkpoint strategy
   readonly std::string logs;   // log file for checkpointing
+  readonly vec3 gravity; 
 
   //central controller chare
   mainchare [migratable] Main { 

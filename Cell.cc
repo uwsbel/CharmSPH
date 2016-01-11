@@ -24,9 +24,12 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
-  for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) {
-    for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) {
-      for (double pz = 0.5 * mDist.z; pz < cellSize.z; pz += mDist.z) {
+  for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) 
+  {
+    for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) 
+    {
+      for (double pz = 0.5 * mDist.z; pz < cellSize.z; pz += mDist.z) 
+      {
         Particle p = Particle();
         p.pos = vec3(px, py, pz) + cellMin;
         p.vel = vec3(0,0,0);
@@ -42,9 +45,12 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           p.typeOfParticle = 0; // Boundary Marker
           particles.push_back(p);
         }
-        else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+        // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
+        //         (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
+        //         (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
+        else if((p.pos.z > fluidMin.z && p.pos.z < (boundaryMax.z - (4 * H))) && 
                 (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-                (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
+                (p.pos.y > fluidMin.y && p.pos.y < (boundaryMax.y * 0.5)))
         {
           p.typeOfParticle = -1; // Fluid Marker
           p.pressure = Eos(p.rho);

@@ -30,8 +30,6 @@ mainmodule charmsph {
   mainchare [migratable] Main { 
     entry Main(CkArgMsg* msg);
     entry [reductiontarget] void energySum(double iE, double fE);  //reduction of potential energy
-    //entry receiveSize;
-    //entry receiveData;
     // called when computes have been created
     entry [reductiontarget] void run() 
     {

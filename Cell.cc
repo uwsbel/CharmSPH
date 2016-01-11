@@ -261,15 +261,9 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
     {
       particles[i].acc = dVel_dRho[i].r;
       particles[i].acc.y = particles[i].acc.y - 1;
+      particles[i].vel += particles[i].acc * DT;; 
+      particles[i].pos += particles[i].vel * DT;
     }
-    else
-    {
-      particles[i].acc = vec3(0,0,0);
-    }
-    particles[i].dRho = dVel_dRho[i].l;
-
-    particles[i].vel += particles[i].acc * DT;; 
-    particles[i].pos += particles[i].vel * DT;
     particles[i].rho += dVel_dRho[i].l * DT;
   }
 }

@@ -66,7 +66,8 @@ Main::Main(CkArgMsg* m)
   fluidMin = vec3(FLUIDMIN_X, FLUIDMIN_Y, FLUIDMIN_Z);
   fluidMax = vec3(FLUIDMAX_X, FLUIDMAX_Y, FLUIDMAX_Z);
 
-  if (m->argc > cur_arg) {
+  if (m->argc > cur_arg) 
+  {
     // assume domainMin is (0, 0, 0)
     domainDim.x=atof(m->argv[cur_arg++]);
     domainDim.y=atof(m->argv[cur_arg++]);
@@ -75,10 +76,9 @@ Main::Main(CkArgMsg* m)
     domainMax = domainDim;
   }
 
-  cellSize.x = 0.2;
-  cellSize.y = 0.2;
-  cellSize.z = 0.2;
-
+  cellSize.x = 0.8;
+  cellSize.y = 0.8;
+  cellSize.z = 0.8;
 
   domainDim = domainMax - domainMin;
 
@@ -102,7 +102,7 @@ Main::Main(CkArgMsg* m)
   mDist.y = cellSize.y / cNY;
   mDist.z = cellSize.z / cNZ;
 
-  gravity = vec3(0, -1, 0);
+  gravity = vec3(0, GRAVITY, 0);
 
   CkPrintf("\nInput Parameters...\n");
   

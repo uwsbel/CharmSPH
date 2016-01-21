@@ -37,7 +37,12 @@ mainmodule charmsph {
       {
         computeArray.doneInserting();
         CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
+        CkPrintf("Computes numLocalElements: %d ....\n", computeArray.numLocalElements());
         CkPrintf("Starting simulation .... \n\n");
+        CkPrintf("Simulation Parameters: \n");
+        CkPrintf("Gravity: ");
+        gravity.print();
+
         cellArray.run();
         computeArray.run();
         startBenchmarkTime = CkWallTimer();
@@ -75,12 +80,15 @@ mainmodule charmsph {
 
 
     //function to perform iterations for Cells
-    entry void run() {
-      if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial {
+    entry void run() 
+    {
+      if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial 
+      {
         stepTime = CkWallTimer();
       }
 
-      serial { 
+      serial 
+      { 
         createSection(); 
         writeCell(0);
       }
@@ -90,18 +98,19 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 200) == 0)
+          if((stepCount % 1000) == 0)
           {
             writeCell(stepCount);
-            //sendSize(); // ReceveSize
-            //sendData(); // ReceiveData
           }
           sendPositions(); 
         } 
 
         //update properties of atoms using new force values 
         //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
-        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { updatePropertiesSPH(dVel_dRho); }
+        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
+        { 
+          updatePropertiesSPH(dVel_dRho); 
+        }
 
         if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
         {
@@ -200,12 +209,18 @@ mainmodule charmsph {
         //self interaction check
         if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2)
         {
-          when calculateForces(ParticleDataMsg *msg) serial { selfInteractSPH(msg); }
+          when calculateForces(ParticleDataMsg *msg) serial 
+          { 
+            selfInteractSPH(msg); 
+          }
         }
         else
         {
           //receive positions from two cells
-          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { interactSPH(msg1, msg2); }
+          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial 
+          { 
+            interactSPH(msg1, msg2); 
+          }
         }
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod== 0) {
@@ -214,7 +229,10 @@ mainmodule charmsph {
         }
       }
       //everything done, reduction on potential energy
-      serial { contribute(2*sizeof(double),energy, CkReduction::sum_double, CkCallback(CkReductionTarget(Main,energySum),mainProxy)); }
+      serial 
+      { 
+        contribute(2*sizeof(double),energy, CkReduction::sum_double, CkCallback(CkReductionTarget(Main,energySum),mainProxy)); 
+      }
     };
   };
 };

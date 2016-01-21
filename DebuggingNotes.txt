@@ -1,0 +1,15 @@
+Cell::createComputes()
+    * dx, dy, dz specify which neighbor we are looking at so the are triplets of 1,1,1 or 1,0,1 or -1,-1,-1, etc.
+
+    * What is computesList used for? Why aren't the px,py,pz in the else statement added to the computeArray?
+
+    * The compute for selfInteraction is added in the first iteration in which we enter the if statement.
+
+    * When there is a single chare the if and else statements produce exactly the same triplets of indeces for the chares. Will this also happen with multiple chares? 
+        Answer:  No this does not happen. The same set of indeces was being produced because of the periodic boundary and since there was only a single chare it was referencing itself
+
+
+Single Chare:
+
+    * When working with single chare, interactSPH is never called (which is expected).
+

@@ -19,14 +19,14 @@
  */
 inline vec3 Distance(vec3 a, vec3 b) {
   vec3 dist3 = a - b;
-  dist3.x -= ((dist3.x > 0.5f * domainDim.x) ? domainDim.x : 0);
-  dist3.x += ((dist3.x < -0.5f * domainDim.x) ? domainDim.x : 0);
+  // dist3.x -= ((dist3.x > 0.5f * domainDim.x) ? domainDim.x : 0);
+  // dist3.x += ((dist3.x < -0.5f * domainDim.x) ? domainDim.x : 0);
 
-  dist3.y -= ((dist3.y > 0.5f * domainDim.y) ? domainDim.y : 0);
-  dist3.y += ((dist3.y < -0.5f * domainDim.y) ? domainDim.y : 0);
+  // dist3.y -= ((dist3.y > 0.5f * domainDim.y) ? domainDim.y : 0);
+  // dist3.y += ((dist3.y < -0.5f * domainDim.y) ? domainDim.y : 0);
 
-  dist3.z -= ((dist3.z > 0.5f * domainDim.z) ? domainDim.z : 0);
-  dist3.z += ((dist3.z < -0.5f * domainDim.z) ? domainDim.z : 0);
+  // dist3.z -= ((dist3.z > 0.5f * domainDim.z) ? domainDim.z : 0);
+  // dist3.z += ((dist3.z < -0.5f * domainDim.z) ? domainDim.z : 0);
   return dist3;
 }
 
@@ -60,6 +60,217 @@ inline vec3 GradW_Spline(vec3 d) { // d is positive. r is the sph particle radiu
   return vec3(0, 0, 0);
 }
 
+ //! Lennard-Jones boundary repulsion force
+inline float calcLJForce(const float r)
+{
+  float force = 0.0f;
+  float dcoeff = 5.0 * abs(GRAVITY) * (domainMax.y);
+  int p1coeff = 12;
+  int p2coeff = 6;
+  if (r <= H)
+  {
+    force = dcoeff * (pow(H/r, p1coeff) - pow(H/r, p2coeff))/(r);   
+  }
+
+   return force;
+}
+
+inline double calcDRho(double rho_i, vec3 vel_i, 
+                       double rho_j, vec3 vel_j, 
+                       vec3 gradW)
+{
+  return (rho_i / rho_j) * PARTICLE_MASS * dot(vel_i - vel_j, gradW);
+}
+
+inline vec3 calcDVel(double rho_i, vec3 vel_i, double p_i, 
+                     double rho_j, vec3 vel_j, double p_j, 
+                     vec3 gradW, double r_ij_dot_gradW_overDist, double multViscosity)
+{
+  return gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+}
+
+inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount, std::vector<vec4>& dVel_dRho1, std::vector<vec4>& dVel_dRho2)
+{
+  int i, j;
+  int firstLen = first->lengthAll;
+  int secondLen = second->lengthAll;
+
+  dVel_dRho1.resize(firstLen);
+  dVel_dRho2.resize(secondLen);
+
+  vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
+  double p_i, p_j, rho_i, rho_j, absDist;
+  int typeOfParticle_i, typeOfParticle_j;
+  vec3 gradW;
+  vec3 dVel_ij;
+  double dRho_ij;
+
+  int i1, j1;
+  for(i1 = 0; i1 < firstLen; i1=i1+BLOCK_SIZE)
+  {
+    for(j1 = 0; j1 < secondLen; j1=j1+BLOCK_SIZE)
+    {
+      for(i = i1; i < i1+BLOCK_SIZE && i < firstLen; i++) 
+      {
+        pos_i            = first->part[i].pos;
+        vel_i            = first->part[i].vel;
+        p_i              = first->part[i].pressure;
+        rho_i            = first->part[i].rho;
+        typeOfParticle_i = first->part[i].typeOfParticle;
+        for(j = j1; j < j1+BLOCK_SIZE && j < secondLen; j++) 
+        {
+  
+          pos_j            = second->part[j].pos;
+          vel_j            = second->part[j].vel;
+          p_j              = second->part[j].pressure;
+          rho_j            = second->part[j].rho;
+          typeOfParticle_j = second->part[j].typeOfParticle;
+
+          r_ij = Distance(pos_i, pos_j);
+          absDist = magnitude(r_ij);
+          
+          if (absDist > PTP_CUT_OFF)
+          {
+            continue;
+          }
+          if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
+            return;
+          }
+          double multViscosity = 1.0;
+          gradW = GradW_Spline(r_ij);
+          double r_ij_dot_gradW = dot(r_ij, gradW);
+          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+
+          //if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
+          {
+            dVel_ij = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
+          }
+          //else
+          //{
+          //  dVel_ij = (r_ij / absDist) * calcLJForce(absDist);
+          //}
+
+          dRho_ij = calcDRho(rho_i, vel_i, rho_j, vel_j, gradW);
+
+          dVel_dRho1[i].r += dVel_ij; 
+          dVel_dRho1[i].l += dRho_ij; 
+
+          dVel_dRho2[j].r -= dVel_ij; 
+          dVel_dRho2[j].l -= dRho_ij; 
+        }
+      }
+    }
+  }
+}
+
+inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec4>& dVel_dRho)
+{
+  int i, j;
+  int firstLen = first->lengthAll;
+
+  //CkPrintf("Calculating Internal Forces...\n");
+  //CkPrintf("NumParticles: %d\n", firstLen);
+
+
+  dVel_dRho.resize(firstLen);
+
+  vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
+  double p_i, p_j, rho_i, rho_j, absDist;
+  int typeOfParticle_i, typeOfParticle_j;
+  vec3 gradW;
+  vec3 dVel_i;
+  double dRho_i;
+
+  for(i = 0; i < firstLen; i++)
+  {
+    pos_i            = first->part[i].pos;
+    vel_i            = first->part[i].vel;
+    p_i              = first->part[i].pressure;
+    rho_i            = first->part[i].rho;
+    typeOfParticle_i = first->part[i].typeOfParticle;
+
+    for(j = 0; j < firstLen; j++) 
+    {
+      if(i != j)
+      {
+        pos_j            = first->part[j].pos;
+        vel_j            = first->part[j].vel;
+        p_j              = first->part[j].pressure;
+        rho_j            = first->part[j].rho;
+        typeOfParticle_j = first->part[j].typeOfParticle;
+
+        r_ij = Distance(pos_i, pos_j);
+        absDist = magnitude(r_ij);
+
+        if (absDist > PTP_CUT_OFF)
+        {
+          continue;
+        }
+        if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
+            return;
+        }
+        double multViscosity = 1.0;
+        gradW = GradW_Spline(r_ij);
+        double r_ij_dot_gradW = dot(r_ij, gradW);
+        double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+
+        //if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
+        {
+          dVel_i = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
+        }
+        //else
+        //{
+        //  dVel_i = (r_ij / absDist) * calcLJForce(absDist);
+        //}
+
+        dRho_i = calcDRho(rho_i, vel_i, rho_j, vel_j, gradW);
+
+        dVel_dRho[i].r += dVel_i;
+        dVel_dRho[i].l += dRho_i;
+      }
+    } 
+  }
+}
+//function to calculate forces among atoms in a single list
+inline double calcInternalForces(ParticleDataMsg* first, int stepCount, std::vector<vec3>& force1) {
+  int i, j, ptpCutOffSqd;
+  int firstLen = first->lengthAll;
+  double powTwenty, powTen, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr;
+  vec3 firstpos, separation, force;
+  double rSix, rTwelve;
+  double energy = 0;
+  int doEnergy = 0;
+  if(stepCount == 1 || stepCount == finalStepCount)
+    doEnergy = 1;
+  force1.resize(firstLen);
+
+  ptpCutOffSqd = PTP_CUT_OFF * PTP_CUT_OFF;
+  powTen = pow(10.0, -10);
+  powTwenty = pow(10.0, -20);
+  for(i = 0; i < firstLen; i++){
+    firstpos = first->part[i].pos;
+    for(j = i+1; j < firstLen; j++) {
+      // computing base values
+      separation = firstpos - first->part[j].pos;
+      rsqd = dot(separation, separation);
+      if(rsqd > 1 && rsqd < ptpCutOffSqd){
+        rsqd = rsqd * powTwenty;
+        r = sqrt(rsqd);
+        rSix = ((double)rsqd) * rsqd * rsqd;
+        rTwelve = rSix * rSix;
+        f = (double)( (12 * VDW_A) / rTwelve - (6 * VDW_B) / rSix);
+        if(doEnergy)
+          energy += (double)( VDW_A / rTwelve - VDW_B / rSix);
+
+        fr = f / rsqd;
+        force = separation * (fr * powTen);
+        force1[i] += force;
+        force1[j] -= force;
+      }
+    }
+  }
+  return energy;
+}
 
 //function to calculate forces among 2 lists of atoms
 inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount,
@@ -127,170 +338,6 @@ inline double calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, in
         }
       }
 
-  return energy;
-}
-
-inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, int stepCount, std::vector<vec4>& dVel_dRho1, std::vector<vec4>& dVel_dRho2)
-{
-  int i, j;
-  int firstLen = first->lengthAll;
-  int secondLen = second->lengthAll;
-
-  dVel_dRho1.resize(firstLen);
-  dVel_dRho2.resize(secondLen);
-
-  vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
-  double p_i, p_j, rho_i, rho_j, absDist;
-  int typeOfParticle_i, typeOfParticle_j;
-  vec3 gradW;
-  vec3 dVel_ij;
-  double dRho_ij;
-
-  int i1, j1;
-  for(i1 = 0; i1 < firstLen; i1=i1+BLOCK_SIZE)
-  {
-    for(j1 = 0; j1 < secondLen; j1=j1+BLOCK_SIZE)
-    {
-      for(i = i1; i < i1+BLOCK_SIZE && i < firstLen; i++) 
-      {
-        pos_i            = first->part[i].pos;
-        vel_i            = first->part[i].vel;
-        p_i              = first->part[i].pressure;
-        rho_i            = first->part[i].rho;
-        typeOfParticle_i = first->part[i].typeOfParticle;
-        for(j = j1; j < j1+BLOCK_SIZE && j < secondLen; j++) 
-        {
-  
-          pos_j            = second->part[j].pos;
-          vel_j            = second->part[j].vel;
-          p_j              = second->part[j].pressure;
-          rho_j            = second->part[j].rho;
-          typeOfParticle_j = second->part[j].typeOfParticle;
-
-          r_ij = Distance(pos_i, pos_j);
-          absDist = magnitude(r_ij);
-          
-          if (absDist > PTP_CUT_OFF)
-          {
-            continue;
-          }
-          if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
-            return;
-          }
-          double multViscosity = 1.0;
-          gradW = GradW_Spline(r_ij);
-          double r_ij_dot_gradW = dot(r_ij, gradW);
-          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
-
-          dVel_ij = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
-          dRho_ij = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
-
-          dVel_dRho1[i].r += dVel_ij; 
-          dVel_dRho1[i].l += dRho_ij; 
-
-          dVel_dRho2[j].r -= dVel_ij; 
-          dVel_dRho2[j].l -= dRho_ij; 
-        }
-      }
-    }
-  }
-}
-
-inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec4>& dVel_dRho)
-{
-  int i, j;
-  int firstLen = first->lengthAll;
-
-  dVel_dRho.resize(firstLen);
-
-  vec3 pos_i, pos_j, vel_i, vel_j, r_ij;
-  double p_i, p_j, rho_i, rho_j, absDist;
-  int typeOfParticle_i, typeOfParticle_j;
-  vec3 gradW;
-  vec3 dVel_i;
-  double dRho_i;
-
-  for(i = 0; i < firstLen; i++)
-  {
-    pos_i            = first->part[i].pos;
-    vel_i            = first->part[i].vel;
-    p_i              = first->part[i].pressure;
-    rho_i            = first->part[i].rho;
-    typeOfParticle_i = first->part[i].typeOfParticle;
-
-    for(j = 0; j < firstLen; j++) 
-    {
-      if(i != j)
-      {
-        pos_j            = first->part[j].pos;
-        vel_j            = first->part[j].vel;
-        p_j              = first->part[j].pressure;
-        rho_j            = first->part[j].rho;
-        typeOfParticle_j = first->part[j].typeOfParticle;
-
-        r_ij = Distance(pos_i, pos_j);
-        absDist = magnitude(r_ij);
-
-        if (absDist > PTP_CUT_OFF)
-        {
-          continue;
-        }
-        if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
-            return;
-        }
-        double multViscosity = 1.0;
-        gradW = GradW_Spline(r_ij);
-        double r_ij_dot_gradW = dot(r_ij, gradW);
-        double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
-
-        dVel_i = gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
-
-        dRho_i = rho_i * PARTICLE_MASS / rho_j * dot(vel_i - vel_j, gradW);
-
-        dVel_dRho[i].r += dVel_i;
-        dVel_dRho[i].l += dRho_i;
-      }
-    } 
-  }
-}
-//function to calculate forces among atoms in a single list
-inline double calcInternalForces(ParticleDataMsg* first, int stepCount, std::vector<vec3>& force1) {
-  int i, j, ptpCutOffSqd;
-  int firstLen = first->lengthAll;
-  double powTwenty, powTen, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr;
-  vec3 firstpos, separation, force;
-  double rSix, rTwelve;
-  double energy = 0;
-  int doEnergy = 0;
-  if(stepCount == 1 || stepCount == finalStepCount)
-    doEnergy = 1;
-  force1.resize(firstLen);
-
-  ptpCutOffSqd = PTP_CUT_OFF * PTP_CUT_OFF;
-  powTen = pow(10.0, -10);
-  powTwenty = pow(10.0, -20);
-  for(i = 0; i < firstLen; i++){
-    firstpos = first->part[i].pos;
-    for(j = i+1; j < firstLen; j++) {
-      // computing base values
-      separation = firstpos - first->part[j].pos;
-      rsqd = dot(separation, separation);
-      if(rsqd > 1 && rsqd < ptpCutOffSqd){
-        rsqd = rsqd * powTwenty;
-        r = sqrt(rsqd);
-        rSix = ((double)rsqd) * rsqd * rsqd;
-        rTwelve = rSix * rSix;
-        f = (double)( (12 * VDW_A) / rTwelve - (6 * VDW_B) / rSix);
-        if(doEnergy)
-          energy += (double)( VDW_A / rTwelve - VDW_B / rSix);
-
-        fr = f / rsqd;
-        force = separation * (fr * powTen);
-        force1[i] += force;
-        force1[j] -= force;
-      }
-    }
-  }
   return energy;
 }
 

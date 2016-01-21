@@ -12,7 +12,6 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   //load balancing to be called when AtSync is called
   usesAtSync = true;
 
-  int numParticlesToAdd = 8;
   double halfH = H / 2;
   double HSquared = H * H;
   double boundaryThickness = 3 * H;
@@ -20,6 +19,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   vec3 boundaryMax = domainMax - boundaryThickness;
 
   int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
+  std::cout << "Chare ID: " << myid << std::endl;
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
@@ -34,12 +34,14 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.vel = vec3(0,0,0);
         p.acc = vec3(0,0,0);
         p.mass = PARTICLE_MASS;
-        p.rho = RHO0;
-        p.pressure = BOUNDARY_PRESSURE;
+        p.rho = 1000;
+        p.pressure = 0;
         /* Set as lower or top boundary particle (above and below z plane)*/
-        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-           (p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
+        if(//(p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
+           //(p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
+           //(p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
+           (p.pos.y < boundaryMin.y))
+
         {
           p.typeOfParticle = 0; // Boundary Marker
           particles.push_back(p);
@@ -47,9 +49,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
         //         (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
         //         (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-        else if((p.pos.z > fluidMin.z && p.pos.z < (boundaryMax.z - (4 * H))) && 
-                (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-                (p.pos.y > fluidMin.y && p.pos.y < (boundaryMax.y * 0.5)))
+        else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 5 * H))) && 
+                ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 5 * H))) &&
+                ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 5 * H))))
         {
           p.typeOfParticle = -1; // Fluid Marker
           p.pressure = Eos(p.rho);
@@ -86,38 +88,78 @@ void Cell::createComputes() {
 
   // for round robin insertion
   int currPe = CkMyPe();
-  //CkPrintf("Creating computes...\n");
+  CkPrintf("Creating computes...\n");
+  std::cout << "NumPe's:" << CkNumPes() << std::endl;
+  std::cout << "currPe:" << currPe << std::endl;
+  std::cout << "NBRS: " << NBRS_Y << std::endl;
+  std::cout << "inbrs: " << inbrs << std::endl;
 
-  for (int num = 0; num < inbrs; num++) {
+  computesList.resize(1); // This is necessary because usually computesList is NUM_NEIGHBORS
+  CkArrayIndex6D index(1,1,1,1,1,1);
+  computeArray[index].insert((++currPe) % CkNumPes());
+  computesList[0] = index;
+  
+  // for (int num = 0; num < inbrs; num++) 
+  // {
+  //   /* The following computation gives us the following set of indeces (-1,-1,-1),(-1,-1,0)
+  //    * ...,(0,0,0)...(1,1,1) for (dx,dy,dz).
+  //    */
+  //   dx = num / (NBRS_Y * NBRS_Z)                - NBRS_X/2;
+  //   dy = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z     - NBRS_Y/2;
+  //   dz = num % NBRS_Z                           - NBRS_Z/2;
+  //   // std::cout << "dx: " << dx << std::endl;
+  //   // std::cout << "dy: " << dy << std::endl;
+  //   // std::cout << "dz: " << dz << std::endl;
+  //   // std::cout << std::endl;
+  //   if (num >= inbrs / 2)
+  //   {
+  //     px1 = x + KAWAY_X;
+  //     py1 = y + KAWAY_Y;
+  //     pz1 = z + KAWAY_Z;
+  //     px2 = px1 + dx;
+  //     py2 = py1 + dy;
+  //     pz2 = pz1 + dz;
+  //     if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
+  //     {
+  //       std::cout << "1-All zeros" << std::endl;
+  //     }
+  //     CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
+  //     computeArray[index].insert((++currPe) % CkNumPes());
+  //     computesList[num] = index;
+  //     // std::cout << "px1: " << px1 << std::endl;
+  //     // std::cout << "py1: " << py1 << std::endl;
+  //     // std::cout << "pz1: " << pz1 << std::endl;
+  //     // std::cout << "px2: " << px2 << std::endl;
+  //     // std::cout << "py2: " << py2 << std::endl;
+  //     // std::cout << "pz2: " << pz2 << std::endl;
+  //     // std::cout << std::endl;
 
-    dx = num / (NBRS_Y * NBRS_Z)                - NBRS_X/2;
-    dy = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z     - NBRS_Y/2;
-    dz = num % NBRS_Z                           - NBRS_Z/2;
+  //   } 
+  //   else 
+  //   {
+  //     // these computes will be created by pairing cells
+  //     px1 = WRAP_X(x + dx) + KAWAY_X;
+  //     py1 = WRAP_Y(y + dy) + KAWAY_Y;
+  //     pz1 = WRAP_Z(z + dz) + KAWAY_Z;
+  //     px2 = px1 - dx;
+  //     py2 = py1 - dy;
+  //     pz2 = pz1 - dz;
+  //     if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
+  //     {
+  //       std::cout << "1All zeros" << std::endl;
+  //     }
+  //     CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
+  //     computesList[num] = index;
+  //     // std::cout << "px1: " << px1 << std::endl;
+  //     // std::cout << "py1: " << py1 << std::endl;
+  //     // std::cout << "pz1: " << pz1 << std::endl;
+  //     // std::cout << "px2: " << px2 << std::endl;
+  //     // std::cout << "py2: " << py2 << std::endl;
+  //     // std::cout << "pz2: " << pz2 << std::endl;
+  //     // std::cout << std::endl;
+  //   }
+  // } // end of for loop
 
-
-    if (num >= inbrs / 2){
-      px1 = x + KAWAY_X;
-      py1 = y + KAWAY_Y;
-      pz1 = z + KAWAY_Z;
-      px2 = px1+dx;
-      py2 = py1+dy;
-      pz2 = pz1+dz;
-
-      CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
-      computeArray[index].insert((++currPe) % CkNumPes());
-      computesList[num] = index;
-    } else {
-      // these computes will be created by pairing cells
-      px1 = WRAP_X(x + dx) + KAWAY_X;
-      py1 = WRAP_Y(y + dy) + KAWAY_Y;
-      pz1 = WRAP_Z(z + dz) + KAWAY_Z;
-      px2 = px1 - dx;
-      py2 = py1 - dy;
-      pz2 = pz1 - dz;
-      CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
-      computesList[num] = index;
-    }
-  } // end of for loop
   contribute(CkCallback(CkReductionTarget(Main,run),mainProxy));
 }
 
@@ -125,6 +167,7 @@ void Cell::createComputes() {
 void Cell::createSection() 
 {
   //knit the computes into a section
+  CkPrintf("Computes list size: %d \n", computesList.size());
   mCastSecProxy = CProxySection_Compute::ckNew(computeArray.ckGetArrayID(), &computesList[0], computesList.size());
 
   //delegate the communication responsibility for this section to multicast library
@@ -147,10 +190,10 @@ void Cell::sendPositions()
   // before sending the message.
   for(int i = 0; i < len; ++i)
   {
-    if(particles[i].typeOfParticle < 0)
-    {
-      particles[i].pressure = Eos(particles[i].rho);
-    }
+    //if(particles[i].typeOfParticle < 0)
+    // {
+    //   particles[i].pressure = Eos(particles[i].rho);
+    // }
     msg->part[i] = particles[i];
   }
 
@@ -168,7 +211,12 @@ void Cell::writeCell(int stepCount)
     ssParticles << "xVelocity,";
     ssParticles << "yVelocity,";
     ssParticles << "zVelocity,";
+    ssParticles << "xAcc,";
+    ssParticles << "yAcc,";
+    ssParticles << "zAcc,";
     ssParticles << "velMagnitude,";
+    ssParticles << "density,";
+    ssParticles << "pressure,";
     ssParticles << "mass,";
     ssParticles << "typeOfParticle";
     ssParticles << std::endl;
@@ -176,18 +224,23 @@ void Cell::writeCell(int stepCount)
     for(int i = 0;i < particles.size();i++)
     {
       Particle p = particles[i];
-      if(p.typeOfParticle==0)
+      //if(p.typeOfParticle==-1)
       {
-      ssParticles << p.pos.x << ',';
-      ssParticles << p.pos.y << ',';
-      ssParticles << p.pos.z << ',';
-      ssParticles << p.vel.x << ',';
-      ssParticles << p.vel.y << ',';
-      ssParticles << p.vel.z << ',';
-      ssParticles << sqrt(dot(p.vel,p.vel)) << ',';
-      ssParticles << p.mass << ',';
-      ssParticles << p.typeOfParticle;
-      ssParticles << std::endl;
+        ssParticles << p.pos.x << ',';
+        ssParticles << p.pos.y << ',';
+        ssParticles << p.pos.z << ',';
+        ssParticles << p.vel.x << ',';
+        ssParticles << p.vel.y << ',';
+        ssParticles << p.vel.z << ',';
+        ssParticles << p.acc.x << ',';
+        ssParticles << p.acc.y << ',';
+        ssParticles << p.acc.z << ',';
+        ssParticles << sqrt(dot(p.vel,p.vel)) << ',';
+        ssParticles << p.rho << ',';
+        ssParticles << p.pressure << ',';
+        ssParticles << p.mass << ',';
+        ssParticles << p.typeOfParticle;
+        ssParticles << std::endl;
       }
     }
 
@@ -218,6 +271,8 @@ void Cell::migrateParticles(int step)
     if(x1!=0 || y1!=0 || z1!=0) 
     {
       outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
+      //outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back((*iter));
+
       std::swap(*iter, particles[size - 1]);
       size--;
     }
@@ -271,6 +326,8 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho)
       particles[i].pos += particles[i].vel * DT;
     }
     particles[i].rho += dVel_dRho[i].l * DT;
+    particles[i].pressure = Eos(particles[i].rho);
+
   }
 }
 

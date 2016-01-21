@@ -24,8 +24,8 @@
 
 #define DEFAULT_DELTA           1	// in femtoseconds
 
-#define DEFAULT_FIRST_LDB       20
-#define DEFAULT_LDB_PERIOD      20
+#define DEFAULT_FIRST_LDB       1000
+#define DEFAULT_LDB_PERIOD      5000
 #define DEFAULT_FT_PERIOD       100000
 
 #define KAWAY_X                 1 //2 Original val
@@ -40,17 +40,17 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-5)
+#define DT                      (5e-6)
 #define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
 #define MU                      (0.001)
-#define GRAVITY                 (-9.81)
+#define GRAVITY                 (-1)
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define MAXVEL                  (10)
+#define MAXVEL                  (0.5)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
@@ -146,11 +146,17 @@ struct vec3 {
     return vec3(x - rhs, y - rhs, z - rhs);
   }
 };
-inline double dot(const vec3& a, const vec3& b) {
-  return a.x*b.x + a.y*b.y + a.z*b.z;
+inline double dot(const vec3& a, const vec3& b) 
+{
+  return a.x * b.x + a.y*b.y + a.z*b.z;
 }
-inline double magnitude(const vec3& a){
+inline double magnitude(const vec3& a)
+{
   return sqrt(dot(a, a));
+}
+inline vec3 getUnitVec(const vec3& a)
+{
+  return a / magnitude(a);
 }
 
 struct vec4 {

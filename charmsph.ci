@@ -71,7 +71,7 @@ mainmodule charmsph {
   array [3D] Cell {
     entry Cell();  
     entry void createComputes();    //call to insert computes that I need  
-    entry void receiveParticles(const std::vector<Particle> &updates);   //receive atoms that have migrated to neighboring cells to me
+    //entry void receiveParticles(const std::vector<Particle> &updates);   //receive atoms that have migrated to neighboring cells to me
     entry void ResumeFromSync();    //resume from here after load balancing
     entry [reductiontarget] void startCheckpoint(); //reduction to start checkpointing
     entry void recvCheckPointDone();  //checkpointing done, resume application
@@ -112,31 +112,31 @@ mainmodule charmsph {
           updatePropertiesSPH(dVel_dRho); 
         }
 
-        if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
-        {
-          //send atoms that have moved beyond my cell to neighbors
-          serial 
-          { 
-            //CkPrintf("A1\n");
-            migrateParticles(stepCount); 
-            //CkPrintf("A2\n");
-          } 
+        // if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
+        // {
+        //   //send atoms that have moved beyond my cell to neighbors
+        //   serial 
+        //   { 
+        //     //CkPrintf("A1\n");
+        //     migrateParticles(stepCount); 
+        //     //CkPrintf("A2\n");
+        //   } 
     
-          //receive particles from my neighbors
-          for(updateCount = 0; updateCount < inbrs; updateCount++) 
-          {
-            when receiveParticles(const std::vector<Particle> &updates) serial 
-            {
-              //CkPrintf("A3\n");
-              for (int i = 0; i < updates.size(); ++i)
-              {
-                particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
-              }
-              //CkPrintf("A4\n");
+        //   //receive particles from my neighbors
+        //   for(updateCount = 0; updateCount < inbrs; updateCount++) 
+        //   {
+        //     when receiveParticles(const std::vector<Particle> &updates) serial 
+        //     {
+        //       //CkPrintf("A3\n");
+        //       for (int i = 0; i < updates.size(); ++i)
+        //       {
+        //         particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
+        //       }
+        //       //CkPrintf("A4\n");
 
-            }
-          }
-        }
+        //     }
+        //   }
+        // }
 
         if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0) serial {
           CkPrintf("Step %d Benchmark Time %lf ms/step\n", 

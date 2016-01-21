@@ -256,38 +256,38 @@ void Cell::writeCell(int stepCount)
 //send the atoms that have moved beyond my cell to neighbors
 void Cell::migrateParticles(int step)
 {
-  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+  // int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
-  int x1, y1, z1;
-  std::vector<std::vector<Particle> > outgoing;
-  outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
-  //CkPrintf("Check 1 from chare %d\n",id);
+  // int x1, y1, z1;
+  // std::vector<std::vector<Particle> > outgoing;
+  // outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
+  // //CkPrintf("Check 1 from chare %d\n",id);
 
-  int size = particles.size();
-  for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
-  {
-    // x1, y1 and z1 have the neighbor indeces relative to current chare
-    migrateToCell(*iter, x1, y1, z1); 
-    if(x1!=0 || y1!=0 || z1!=0) 
-    {
-      outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
-      //outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back((*iter));
+  // int size = particles.size();
+  // for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
+  // {
+  //   // x1, y1 and z1 have the neighbor indeces relative to current chare
+  //   migrateToCell(*iter, x1, y1, z1); 
+  //   if(x1!=0 || y1!=0 || z1!=0) 
+  //   {
+  //     outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
+  //     //outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back((*iter));
 
-      std::swap(*iter, particles[size - 1]);
-      size--;
-    }
-  }
-  //CkPrintf("Check 2 from chare %d\n",id);
+  //     std::swap(*iter, particles[size - 1]);
+  //     size--;
+  //   }
+  // }
+  // //CkPrintf("Check 2 from chare %d\n",id);
 
-  particles.resize(size);
-  for(int num = 0; num < inbrs; num++) 
-  {
-    x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
-    y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
-    z1 = num % NBRS_Z                       - NBRS_Z/2;
-    cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
-  }
-  //CkPrintf("Check 3 from chare %d\n",id);
+  // particles.resize(size);
+  // for(int num = 0; num < inbrs; num++) 
+  // {
+  //   x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
+  //   y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
+  //   z1 = num % NBRS_Z                       - NBRS_Z/2;
+  //   cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
+  // }
+  // //CkPrintf("Check 3 from chare %d\n",id);
 
 }
 

@@ -40,7 +40,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (5e-6)
+#define DT                      (1e-5)
 #define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
@@ -50,7 +50,7 @@
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define MAXVEL                  (0.5)
+#define MAXVEL                  (0.6)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
@@ -169,6 +169,12 @@ struct vec4 {
   { 
     r = r_;
     l = l_;
+  }
+
+  void print()
+  {
+    r.print();
+    printf("l = %f \n", l);
   }
 
   inline vec4& operator += (const vec4 &rhs) {

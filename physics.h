@@ -64,12 +64,12 @@ inline vec3 GradW_Spline(vec3 d) { // d is positive. r is the sph particle radiu
 inline float calcLJForce(const float r)
 {
   float force = 0.0f;
-  float dcoeff = 5.0 * abs(GRAVITY) * (domainMax.y);
+  float dcoeff =  abs(GRAVITY);// * (domainMax.y);
   int p1coeff = 12;
   int p2coeff = 6;
   if (r <= H)
   {
-    force = dcoeff * (pow(H/r, p1coeff) - pow(H/r, p2coeff))/(r);   
+    force = dcoeff * (pow(H/r, p1coeff) - pow(H/r, p2coeff));   
   }
 
    return force;
@@ -134,20 +134,20 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
             continue;
           }
           if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
-            return;
+            continue;
           }
           double multViscosity = 1.0;
           gradW = GradW_Spline(r_ij);
           double r_ij_dot_gradW = dot(r_ij, gradW);
           double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
 
-          //if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
+          if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
           {
             dVel_ij = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
           }
           //else
           //{
-          //  dVel_ij = (r_ij / absDist) * calcLJForce(absDist);
+          // dVel_ij = (r_ij / absDist) * calcLJForce(absDist);
           //}
 
           dRho_ij = calcDRho(rho_i, vel_i, rho_j, vel_j, gradW);
@@ -178,8 +178,9 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
   double p_i, p_j, rho_i, rho_j, absDist;
   int typeOfParticle_i, typeOfParticle_j;
   vec3 gradW;
-  vec3 dVel_i;
-  double dRho_i;
+  vec3 dVel_i = vec3(0,0,0);
+  double dRho_i = 0.0;
+  //CkPrintf("firstLen = %d\n",firstLen);
 
   for(i = 0; i < firstLen; i++)
   {
@@ -188,9 +189,8 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
     p_i              = first->part[i].pressure;
     rho_i            = first->part[i].rho;
     typeOfParticle_i = first->part[i].typeOfParticle;
-
     for(j = 0; j < firstLen; j++) 
-    {
+    {     
       if(i != j)
       {
         pos_j            = first->part[j].pos;
@@ -202,19 +202,21 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         r_ij = Distance(pos_i, pos_j);
         absDist = magnitude(r_ij);
 
+
         if (absDist > PTP_CUT_OFF)
         {
           continue;
         }
-        if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) {
-            return;
+        if (typeOfParticle_i >= 0  &&  typeOfParticle_j >= 0) 
+        {
+          continue;
         }
         double multViscosity = 1.0;
         gradW = GradW_Spline(r_ij);
         double r_ij_dot_gradW = dot(r_ij, gradW);
         double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
 
-        //if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
+        if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
         {
           dVel_i = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
         }

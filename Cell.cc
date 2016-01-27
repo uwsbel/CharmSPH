@@ -35,7 +35,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.acc = vec3(0,0,0);
         p.mass = PARTICLE_MASS;
         p.rho = 1000;
-        p.pressure = 0;
+        p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
         if(//(p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
            //(p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
@@ -54,12 +54,14 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
                 ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 5 * H))))
         {
           p.typeOfParticle = -1; // Fluid Marker
-          p.pressure = Eos(p.rho);
           particles.push_back(p);  
         }
       }
     }
   }
+  // Copy particles into a second vector for Runge-Kutta Integration purposes.
+  particles2 = particles;
+
   energy[0] = energy[1] = 0;
   setMigratable(false);
 }
@@ -180,23 +182,26 @@ void Cell::createSection()
 }
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
-void Cell::sendPositions() 
+void Cell::sendPositions(int iteration) 
 {
+  if(iteration == 1)
+  {
+    particles2 = particles;
+  }
+
   unsigned int len = particles.size();
   //create the particle and control message to be sent to computes
   ParticleDataMsg* msg = new (len) ParticleDataMsg(thisIndex.x, thisIndex.y, thisIndex.z, len);
 
   // Create a message with all the particles in the cell. Calculate the pressure of fluid particles
   // before sending the message.
+  
+  int counter = 0;
   for(int i = 0; i < len; ++i)
   {
-    //if(particles[i].typeOfParticle < 0)
-    // {
-    //   particles[i].pressure = Eos(particles[i].rho);
-    // }
-    msg->part[i] = particles[i];
+    msg->part[i] = particles2[i];
   }
-
+  //CkPrintf("Finish sending positions at iteration %d.... Triggering calculateForces\n", iteration);
   mCastSecProxy.calculateForces(msg);
 }
 
@@ -261,7 +266,7 @@ void Cell::migrateParticles(int step)
   // int x1, y1, z1;
   // std::vector<std::vector<Particle> > outgoing;
   // outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
-  // //CkPrintf("Check 1 from chare %d\n",id);
+  // ////CkPrintf("Check 1 from chare %d\n",id);
 
   // int size = particles.size();
   // for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
@@ -277,7 +282,7 @@ void Cell::migrateParticles(int step)
   //     size--;
   //   }
   // }
-  // //CkPrintf("Check 2 from chare %d\n",id);
+  // ////CkPrintf("Check 2 from chare %d\n",id);
 
   // particles.resize(size);
   // for(int num = 0; num < inbrs; num++) 
@@ -287,7 +292,7 @@ void Cell::migrateParticles(int step)
   //   z1 = num % NBRS_Z                       - NBRS_Z/2;
   //   cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
   // }
-  // //CkPrintf("Check 3 from chare %d\n",id);
+  // ////CkPrintf("Check 3 from chare %d\n",id);
 
 }
 
@@ -313,22 +318,40 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz)
 
 
 // Function to update properties (i.e. acceleration, velocity and position) in particles
-void Cell::updatePropertiesSPH(vec4 *dVel_dRho) 
+// add double dt arg, use particles 1 or 2
+void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration) 
 {
   int i;
-
-  for(i = 0; i < particles.size(); i++) 
+  if(iteration == 1)
   {
-    if(particles[i].typeOfParticle == -1)
+    for(i = 0; i < particles2.size(); i++) 
     {
-      particles[i].acc = dVel_dRho[i].r + gravity;
-      particles[i].vel += particles[i].acc * DT;; 
-      particles[i].pos += particles[i].vel * DT;
-    }
-    particles[i].rho += dVel_dRho[i].l * DT;
-    particles[i].pressure = Eos(particles[i].rho);
-
+      if(particles2[i].typeOfParticle == -1)
+      {
+        particles2[i].acc = dVel_dRho[i].r + gravity;
+        particles2[i].pos += particles2[i].vel * 0.5 * DT;
+        particles2[i].vel += particles2[i].acc * 0.5 * DT; 
+      }
+      particles2[i].rho += dVel_dRho[i].l * 0.5 * DT;
+      particles2[i].pressure = Eos(particles2[i].rho);
+    }   
   }
+  else
+  {
+    for(i = 0; i < particles.size(); i++) 
+    {
+      if(particles[i].typeOfParticle == -1)
+      {
+        particles[i].acc = dVel_dRho[i].r + gravity;
+        particles[i].pos += particles[i].vel * DT;
+        particles[i].vel += particles[i].acc * DT; 
+      }
+      particles[i].rho += dVel_dRho[i].l * DT;
+      particles[i].pressure = Eos(particles[i].rho);
+    } 
+  }
+  //CkPrintf("Finished updating particles in iteration %d...\n", iteration);
+
 }
 
 inline double velocityCheck(double inVelocity) 

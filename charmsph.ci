@@ -98,28 +98,45 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 1000) == 0)
+          if((stepCount % 100) == 0)
           {
             writeCell(stepCount);
           }
-          sendPositions(); 
+          //CkPrintf("1. First sendPositions\n"); 
+          sendPositions(1); 
         } 
 
         //update properties of atoms using new force values 
         //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
         { 
-          updatePropertiesSPH(dVel_dRho); 
+          //CkPrintf("3, reduceForces was called. First update properties\n"); 
+          updatePropertiesSPH(dVel_dRho, 1); 
         }
+
+        serial 
+        { 
+          //CkPrintf("4. Second sendPositions\n"); 
+          sendPositions(2); 
+        } 
+
+        //update properties of atoms using new force values 
+        //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
+        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
+        { 
+          //CkPrintf("6. reduceForces was called for the second time.\n"); 
+          updatePropertiesSPH(dVel_dRho, 2); 
+        }
+
 
         // if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
         // {
         //   //send atoms that have moved beyond my cell to neighbors
         //   serial 
         //   { 
-        //     //CkPrintf("A1\n");
+        //     CkPrintf("A1\n");
         //     migrateParticles(stepCount); 
-        //     //CkPrintf("A2\n");
+        //     CkPrintf("A2\n");
         //   } 
     
         //   //receive particles from my neighbors
@@ -127,12 +144,12 @@ mainmodule charmsph {
         //   {
         //     when receiveParticles(const std::vector<Particle> &updates) serial 
         //     {
-        //       //CkPrintf("A3\n");
+        //       CkPrintf("A3\n");
         //       for (int i = 0; i < updates.size(); ++i)
         //       {
         //         particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
         //       }
-        //       //CkPrintf("A4\n");
+        //       CkPrintf("A4\n");
 
         //     }
         //   }
@@ -211,6 +228,12 @@ mainmodule charmsph {
         {
           when calculateForces(ParticleDataMsg *msg) serial 
           { 
+            //CkPrintf("2. First self interact...\n");
+            selfInteractSPH(msg); 
+          }
+          when calculateForces(ParticleDataMsg *msg) serial 
+          { 
+            //CkPrintf("5. Second self interact...\n");
             selfInteractSPH(msg); 
           }
         }

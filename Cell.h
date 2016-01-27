@@ -12,7 +12,7 @@ inline double Eos(double rho) {
   double B = 100 * RHO0 * MAXVEL * MAXVEL / gama; //200;//314e6; //c^2 * RHO0 / gama where c = 1484 m/s for water
   //if (type < +.1f) 
   //{
-  return B * (pow(rho / RHO0, gama) - 1)+ BASEPRES; //1 * (B * (pow(rho / RHO0, gama) - 1) + BASEPRES);
+  return B * (pow(rho / RHO0, gama) - 1) + BASEPRES; //1 * (B * (pow(rho / RHO0, gama) - 1) + BASEPRES);
   //} 
   // else 
   // {
@@ -48,6 +48,8 @@ private:
 
   // list of atoms
   std::vector<Particle> particles;
+  std::vector<Particle> particles2;
+
   // my compute locations
   std::vector<CkArrayIndex6D> computesList;
   // to count the number of steps, and decide when to stop
@@ -64,7 +66,7 @@ private:
   void migrateToCell(Particle p, int &px, int &py, int &pz);
   // updates properties after receiving forces from computes
   //void updateProperties(vec3 *forces);
-  void updatePropertiesSPH(vec4 *dVel_dRho);
+  void updatePropertiesSPH(vec4 *dVel_dRho, int iteration);
 
   // limit velcities to an upper limit
   void limitVelocity(Particle &p);
@@ -80,7 +82,7 @@ public:
   void createComputes();  //add my computes
   void createSection();   //created multicast section of computes
   void migrateParticles(int step);
-  void sendPositions();
+  void sendPositions(int iteration);
   void writeCell(int stepCount);
   void startCheckpoint(int);
   void pup(PUP::er &p);

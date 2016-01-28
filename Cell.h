@@ -6,18 +6,11 @@
 
 //fluid equation of state
 //inline double Eos(double rho, double type) {
-inline double Eos(double rho) {
-
+inline double Eos(double rho) 
+{
   int gama = 7;
-  double B = 100 * RHO0 * MAXVEL * MAXVEL / gama; //200;//314e6; //c^2 * RHO0 / gama where c = 1484 m/s for water
-  //if (type < +.1f) 
-  //{
-  return B * (pow(rho / RHO0, gama) - 1) + BASEPRES; //1 * (B * (pow(rho / RHO0, gama) - 1) + BASEPRES);
-  //} 
-  // else 
-  // {
-  //   return BASEPRES;
-  // }
+  double B = 100 * RHO0 * MAXVEL * MAXVEL / gama; 
+  return B * (pow(rho / RHO0, gama) - 1) + BASEPRES;
 }
 
 //data message to be sent to computes

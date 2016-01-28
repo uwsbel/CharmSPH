@@ -6,7 +6,7 @@
 #include "math.h"
 #include <cstdio>
 
-#define HYDROGEN_MASS           (1.67 * pow( 10.0,-24)) // in g
+#define HYDROGEN_MASS           (1.67 * pow(10.0,-24)) // in g
 #define VDW_A                   (1.1328 * pow(10.0, -133)) // in (g m^2/s^2) m^12
 #define VDW_B                   (2.23224 * pow(10.0, -76)) // in (g m^2/s^2) m^6
 
@@ -40,7 +40,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-5)
+#define DT                      (1e-4)
 #define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
@@ -148,7 +148,7 @@ struct vec3 {
 };
 inline double dot(const vec3& a, const vec3& b) 
 {
-  return a.x * b.x + a.y*b.y + a.z*b.z;
+  return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 inline double magnitude(const vec3& a)
 {

@@ -34,7 +34,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.vel = vec3(0,0,0);
         p.acc = vec3(0,0,0);
         p.mass = PARTICLE_MASS;
-        p.rho = 1000;
+        p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
         if(//(p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
@@ -44,6 +44,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
 
         {
           p.typeOfParticle = 0; // Boundary Marker
+          //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
         // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
@@ -322,11 +323,13 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz)
 void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration) 
 {
   int i;
+  int typeOfParticle;
   if(iteration == 1)
   {
     for(i = 0; i < particles2.size(); i++) 
     {
-      if(particles2[i].typeOfParticle == -1)
+      typeOfParticle = particles2[i].typeOfParticle;
+      if(typeOfParticle == -1)
       {
         particles2[i].acc = dVel_dRho[i].r + gravity;
         particles2[i].pos += particles2[i].vel * 0.5 * DT;
@@ -340,14 +343,16 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
   {
     for(i = 0; i < particles.size(); i++) 
     {
-      if(particles[i].typeOfParticle == -1)
+      typeOfParticle = particles[i].typeOfParticle;
+      if(typeOfParticle == -1)
       {
         particles[i].acc = dVel_dRho[i].r + gravity;
         particles[i].pos += particles[i].vel * DT;
         particles[i].vel += particles[i].acc * DT; 
       }
-      particles[i].rho += dVel_dRho[i].l * DT;
-      particles[i].pressure = Eos(particles[i].rho);
+       particles[i].rho += dVel_dRho[i].l * DT; // With constant presure the density shouldnt beupdated
+       particles[i].pressure = Eos(particles[i].rho);
+
     } 
   }
   //CkPrintf("Finished updating particles in iteration %d...\n", iteration);

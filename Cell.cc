@@ -19,7 +19,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   vec3 boundaryMax = domainMax - boundaryThickness;
 
   int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
-  std::cout << "Chare ID: " << myid << std::endl;
+  //std::cout << "Chare ID: " << myid << std::endl;
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
@@ -37,8 +37,8 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
-        if((p.pos.z < boundaryMin.z) || //p.pos.z > boundaryMax.z) || 
-           (p.pos.x < boundaryMin.x) || //p.pos.x > boundaryMax.x) ||
+        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
+           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
            (p.pos.y < boundaryMin.y)) //|| p.pos.y > boundaryMax.y))
            //(p.pos.y < boundaryMin.y))
         {
@@ -46,12 +46,12 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
-        //         (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
-        //         (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-        if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
-           ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
-           ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
+        else if((p.pos.z > fluidMin.z && p.pos.z < domainMax.z) && 
+                (p.pos.x > fluidMin.x && p.pos.x < (domainMax.x/2)) &&
+                (p.pos.y > fluidMin.y && p.pos.y < (domainMax.y/2)))
+        // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
+        //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
+        //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
         {
           p.typeOfParticle = -1; // Fluid Marker
           particles.push_back(p);  
@@ -90,11 +90,11 @@ void Cell::createComputes() {
 
   // for round robin insertion
   int currPe = CkMyPe();
-  CkPrintf("Creating computes...\n");
-  std::cout << "NumPe's:" << CkNumPes() << std::endl;
-  std::cout << "currPe:" << currPe << std::endl;
-  std::cout << "NBRS: " << NBRS_Y << std::endl;
-  std::cout << "inbrs: " << inbrs << std::endl;
+  // CkPrintf("Creating computes...\n");
+  // std::cout << "NumPe's:" << CkNumPes() << std::endl;
+  // std::cout << "currPe:" << currPe << std::endl;
+  // std::cout << "NBRS: " << NBRS_Y << std::endl;
+  // std::cout << "inbrs: " << inbrs << std::endl;
 
   /* Single chare single compute tweak. Uncomment this and comment for loop for */
   // computesList.resize(1); // This is necessary because usually computesList is NUM_NEIGHBORS

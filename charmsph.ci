@@ -98,7 +98,7 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 50) == 0)
+          if((stepCount % 100) == 0)
           {
             writeCell(stepCount);
           }

@@ -41,7 +41,7 @@
 
 
 #define DT                      (1e-3)
-#define H                       (0.05)
+#define H                       (0.025)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
@@ -50,7 +50,7 @@
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define MAXVEL                  (0.6)
+#define MAXVEL                  (1.5)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 

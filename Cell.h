@@ -58,7 +58,6 @@ private:
   int numReadyCheckpoint;
   void migrateToCell(Particle p, int &px, int &py, int &pz);
   // updates properties after receiving forces from computes
-  //void updateProperties(vec3 *forces);
   void updatePropertiesSPH(vec4 *dVel_dRho, int iteration);
 
   // limit velcities to an upper limit

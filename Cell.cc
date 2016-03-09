@@ -49,9 +49,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
         //         (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
         //         (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-        else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 8 * H))) && 
-                ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 8 * H))) &&
-                ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 8 * H))))
+        if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
+           ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
+           ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
         {
           p.typeOfParticle = -1; // Fluid Marker
           particles.push_back(p);  
@@ -97,72 +97,55 @@ void Cell::createComputes() {
   std::cout << "inbrs: " << inbrs << std::endl;
 
   /* Single chare single compute tweak. Uncomment this and comment for loop for */
-  computesList.resize(1); // This is necessary because usually computesList is NUM_NEIGHBORS
-  CkArrayIndex6D index(1,1,1,1,1,1);
-  computeArray[index].insert((++currPe) % CkNumPes());
-  computesList[0] = index;
+  // computesList.resize(1); // This is necessary because usually computesList is NUM_NEIGHBORS
+  // CkArrayIndex6D index(1,1,1,1,1,1);
+  // computeArray[index].insert((++currPe) % CkNumPes());
+  // computesList[0] = index;
   
-  // /* Comment all of the following for loop to make the code serial. */
-  // for (int num = 0; num < inbrs; num++) 
-  // {
-  //   /* The following computation gives us the following set of indeces (-1,-1,-1),(-1,-1,0)
-  //    * ...,(0,0,0)...(1,1,1) for (dx,dy,dz).
-  //    */
-  //   dx = num / (NBRS_Y * NBRS_Z)                - NBRS_X/2;
-  //   dy = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z     - NBRS_Y/2;
-  //   dz = num % NBRS_Z                           - NBRS_Z/2;
-  //   // std::cout << "dx: " << dx << std::endl;
-  //   // std::cout << "dy: " << dy << std::endl;
-  //   // std::cout << "dz: " << dz << std::endl;
-  //   // std::cout << std::endl;
-  //   if (num >= inbrs / 2)
-  //   {
-  //     px1 = x + KAWAY_X;
-  //     py1 = y + KAWAY_Y;
-  //     pz1 = z + KAWAY_Z;
-  //     px2 = px1 + dx;
-  //     py2 = py1 + dy;
-  //     pz2 = pz1 + dz;
-  //     if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
-  //     {
-  //       std::cout << "1-All zeros" << std::endl;
-  //     }
-  //     CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
-  //     computeArray[index].insert((++currPe) % CkNumPes());
-  //     computesList[num] = index;
-  //     // std::cout << "px1: " << px1 << std::endl;
-  //     // std::cout << "py1: " << py1 << std::endl;
-  //     // std::cout << "pz1: " << pz1 << std::endl;
-  //     // std::cout << "px2: " << px2 << std::endl;
-  //     // std::cout << "py2: " << py2 << std::endl;
-  //     // std::cout << "pz2: " << pz2 << std::endl;
-  //     // std::cout << std::endl;
+  /* Comment all of the following for loop to make the code serial. */
+  for (int num = 0; num < inbrs; num++) 
+  {
+    /* The following computation gives us the following set of indeces (-1,-1,-1),(-1,-1,0)
+     * ...,(0,0,0)...(1,1,1) for (dx,dy,dz).
+     */
+    dx = num / (NBRS_Y * NBRS_Z)                - NBRS_X/2;
+    dy = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z     - NBRS_Y/2;
+    dz = num % NBRS_Z                           - NBRS_Z/2;
 
-  //   } 
-  //   else 
-  //   {
-  //     // these computes will be created by pairing cells
-  //     px1 = WRAP_X(x + dx) + KAWAY_X;
-  //     py1 = WRAP_Y(y + dy) + KAWAY_Y;
-  //     pz1 = WRAP_Z(z + dz) + KAWAY_Z;
-  //     px2 = px1 - dx;
-  //     py2 = py1 - dy;
-  //     pz2 = pz1 - dz;
-  //     if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
-  //     {
-  //       std::cout << "1All zeros" << std::endl;
-  //     }
-  //     CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
-  //     computesList[num] = index;
-  //     // std::cout << "px1: " << px1 << std::endl;
-  //     // std::cout << "py1: " << py1 << std::endl;
-  //     // std::cout << "pz1: " << pz1 << std::endl;
-  //     // std::cout << "px2: " << px2 << std::endl;
-  //     // std::cout << "py2: " << py2 << std::endl;
-  //     // std::cout << "pz2: " << pz2 << std::endl;
-  //     // std::cout << std::endl;
-  //   }
-  // } // end of for loop
+    if (num >= inbrs / 2)
+    {
+      px1 = x + KAWAY_X;
+      py1 = y + KAWAY_Y;
+      pz1 = z + KAWAY_Z;
+      px2 = px1 + dx;
+      py2 = py1 + dy;
+      pz2 = pz1 + dz;
+      if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
+      {
+        std::cout << "1-All zeros" << std::endl;
+      }
+      CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
+      computeArray[index].insert((++currPe) % CkNumPes());
+      computesList[num] = index;
+    } 
+    else 
+    {
+      // these computes will be created by pairing cells
+      px1 = WRAP_X(x + dx) + KAWAY_X;
+      py1 = WRAP_Y(y + dy) + KAWAY_Y;
+      pz1 = WRAP_Z(z + dz) + KAWAY_Z;
+      px2 = px1 - dx;
+      py2 = py1 - dy;
+      pz2 = pz1 - dz;
+      if(px1 == 1 && py1 == 1 && pz1 == 1 && px2 == 1 && py2 == 1 && pz2 == 1)
+      {
+        std::cout << "1All zeros" << std::endl;
+      }
+      CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
+      computesList[num] = index;
+
+    }
+  } // end of for loop
 
   contribute(CkCallback(CkReductionTarget(Main,run),mainProxy));
 }
@@ -176,7 +159,6 @@ void Cell::createSection()
   //delegate the communication responsibility for this section to multicast library
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   mCastSecProxy.ckSectionDelegate(mCastGrp);
-  //mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForces), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
   // Reduction target to compute proxies are reduceForcesSPH
   mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkReductionTarget(Cell,reduceForcesSPH), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
 
@@ -355,7 +337,6 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
 
     } 
   }
-  //CkPrintf("Finished updating particles in iteration %d...\n", iteration);
 
 }
 

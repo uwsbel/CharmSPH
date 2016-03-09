@@ -76,9 +76,9 @@ Main::Main(CkArgMsg* m)
     domainMax = domainDim;
   }
 
-  cellSize.x = 1;
-  cellSize.y = 1;
-  cellSize.z = 1;
+  cellSize.x = 4 * H;
+  cellSize.y = 4 * H;
+  cellSize.z = 4 * H;
 
   domainDim = domainMax - domainMin;
 

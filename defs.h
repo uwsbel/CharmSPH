@@ -40,7 +40,7 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (5e-4)
+#define DT                      (1e-3)
 #define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
@@ -90,7 +90,7 @@
 #define CELL_ORIGIN_Y	          0
 #define CELL_ORIGIN_Z	          0
 
-#define MIGRATE_STEPCOUNT	      5
+#define MIGRATE_STEPCOUNT	      1
 #define DEFAULT_FINALSTEPCOUNT	1001
 #define MAX_VELOCITY		        .1  //in A/fs
 

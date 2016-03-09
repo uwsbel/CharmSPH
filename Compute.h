@@ -20,9 +20,6 @@ class Compute : public CBase_Compute {
 
     void selfInteractSPH(ParticleDataMsg *msg);
     void interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2);
-
-    //void selfInteract(ParticleDataMsg *msg);
-    //void interact(ParticleDataMsg *msg1, ParticleDataMsg *msg2);
 };
 
 #endif

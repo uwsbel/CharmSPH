@@ -144,10 +144,8 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         double r_ij_dot_gradW = dot(r_ij, gradW);
         double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
 
-        //if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
-        {
-          dVel_i = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
-        }
+        dVel_i = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
+        
         //else
         //{
         //  dVel_i = (r_ij / absDist) * calcLJForce(absDist);
@@ -214,10 +212,7 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
           double r_ij_dot_gradW = dot(r_ij, gradW);
           double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
 
-          if ((typeOfParticle_i == -1)  &&  (typeOfParticle_j == -1)) 
-          {
-            dVel_ij = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
-          }
+          dVel_ij = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
           //else
           //{
           // dVel_ij = (r_ij / absDist) * calcLJForce(absDist);

@@ -24,7 +24,6 @@ void Compute::selfInteractSPH(ParticleDataMsg *msg){
 
   calcInternalForcesSPH(msg, stepCount, dVel_dRho);
 
-  //???? What is this part doing?? Go back to the original code and print out some of the output.
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   CkGetSectionInfo(mcast1, msg);
 

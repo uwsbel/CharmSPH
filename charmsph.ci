@@ -71,7 +71,7 @@ mainmodule charmsph {
   array [3D] Cell {
     entry Cell();  
     entry void createComputes();    //call to insert computes that I need  
-    //entry void receiveParticles(const std::vector<Particle> &updates);   //receive atoms that have migrated to neighboring cells to me
+    entry void receiveParticles(const std::vector<Particle> &updates);   //receive atoms that have migrated to neighboring cells to me
     entry void ResumeFromSync();    //resume from here after load balancing
     entry [reductiontarget] void startCheckpoint(); //reduction to start checkpointing
     entry void recvCheckPointDone();  //checkpointing done, resume application
@@ -98,7 +98,7 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0)
+          if((stepCount % 50) == 0)
           {
             writeCell(stepCount);
           }
@@ -121,7 +121,6 @@ mainmodule charmsph {
         } 
 
         //update properties of atoms using new force values 
-        //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
         { 
           //CkPrintf("6. reduceForces was called for the second time.\n"); 
@@ -129,31 +128,26 @@ mainmodule charmsph {
         }
 
 
-        // if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
-        // {
-        //   //send atoms that have moved beyond my cell to neighbors
-        //   serial 
-        //   { 
-        //     CkPrintf("A1\n");
-        //     migrateParticles(stepCount); 
-        //     CkPrintf("A2\n");
-        //   } 
+        if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
+        {
+          //send atoms that have moved beyond my cell to neighbors
+          serial 
+          { 
+            migrateParticles(stepCount); 
+          } 
     
-        //   //receive particles from my neighbors
-        //   for(updateCount = 0; updateCount < inbrs; updateCount++) 
-        //   {
-        //     when receiveParticles(const std::vector<Particle> &updates) serial 
-        //     {
-        //       CkPrintf("A3\n");
-        //       for (int i = 0; i < updates.size(); ++i)
-        //       {
-        //         particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
-        //       }
-        //       CkPrintf("A4\n");
-
-        //     }
-        //   }
-        // }
+          //receive particles from my neighbors
+          for(updateCount = 0; updateCount < inbrs; updateCount++) 
+          {
+            when receiveParticles(const std::vector<Particle> &updates) serial 
+            {
+              for (int i = 0; i < updates.size(); ++i)
+              {
+                particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
+              } 
+            }
+          }
+        }
 
         if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0) serial {
           CkPrintf("Step %d Benchmark Time %lf ms/step\n", 
@@ -242,6 +236,13 @@ mainmodule charmsph {
           //receive positions from two cells
           when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial 
           { 
+            //CkPrintf("2. First interact");
+            interactSPH(msg1, msg2); 
+          }
+          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial 
+          { 
+            //CkPrintf("5. second interact");
+
             interactSPH(msg1, msg2); 
           }
         }

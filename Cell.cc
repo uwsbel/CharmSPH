@@ -37,11 +37,10 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
-        if(//(p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-           //(p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-           //(p.pos.y < boundaryMin.y || p.pos.y > boundaryMax.y))
-           (p.pos.y < boundaryMin.y))
-
+        if((p.pos.z < boundaryMin.z) || //p.pos.z > boundaryMax.z) || 
+           (p.pos.x < boundaryMin.x) || //p.pos.x > boundaryMax.x) ||
+           (p.pos.y < boundaryMin.y)) //|| p.pos.y > boundaryMax.y))
+           //(p.pos.y < boundaryMin.y))
         {
           p.typeOfParticle = 0; // Boundary Marker
           //p.pressure = BOUNDARY_PRESSURE;
@@ -50,9 +49,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         // else if((p.pos.z > fluidMin.z && p.pos.z < fluidMax.z) && 
         //         (p.pos.x > fluidMin.x && p.pos.x < fluidMax.x) &&
         //         (p.pos.y > fluidMin.y && p.pos.y < fluidMax.y))
-        else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 5 * H))) && 
-                ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 5 * H))) &&
-                ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 5 * H))))
+        else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 8 * H))) && 
+                ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 8 * H))) &&
+                ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 8 * H))))
         {
           p.typeOfParticle = -1; // Fluid Marker
           particles.push_back(p);  
@@ -97,11 +96,13 @@ void Cell::createComputes() {
   std::cout << "NBRS: " << NBRS_Y << std::endl;
   std::cout << "inbrs: " << inbrs << std::endl;
 
+  /* Single chare single compute tweak. Uncomment this and comment for loop for */
   computesList.resize(1); // This is necessary because usually computesList is NUM_NEIGHBORS
   CkArrayIndex6D index(1,1,1,1,1,1);
   computeArray[index].insert((++currPe) % CkNumPes());
   computesList[0] = index;
   
+  // /* Comment all of the following for loop to make the code serial. */
   // for (int num = 0; num < inbrs; num++) 
   // {
   //   /* The following computation gives us the following set of indeces (-1,-1,-1),(-1,-1,0)
@@ -170,7 +171,6 @@ void Cell::createComputes() {
 void Cell::createSection() 
 {
   //knit the computes into a section
-  CkPrintf("Computes list size: %d \n", computesList.size());
   mCastSecProxy = CProxySection_Compute::ckNew(computeArray.ckGetArrayID(), &computesList[0], computesList.size());
 
   //delegate the communication responsibility for this section to multicast library
@@ -230,7 +230,7 @@ void Cell::writeCell(int stepCount)
     for(int i = 0;i < particles.size();i++)
     {
       Particle p = particles[i];
-      //if(p.typeOfParticle==-1)
+      if(p.typeOfParticle==-1)
       {
         ssParticles << p.pos.x << ',';
         ssParticles << p.pos.y << ',';
@@ -262,38 +262,38 @@ void Cell::writeCell(int stepCount)
 //send the atoms that have moved beyond my cell to neighbors
 void Cell::migrateParticles(int step)
 {
-  // int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
-  // int x1, y1, z1;
-  // std::vector<std::vector<Particle> > outgoing;
-  // outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
-  // ////CkPrintf("Check 1 from chare %d\n",id);
+  int x1, y1, z1;
+  std::vector<std::vector<Particle> > outgoing;
+  outgoing.resize(inbrs); // Resive to number of neighbor cells (27).
+  ////CkPrintf("Check 1 from chare %d\n",id);
 
-  // int size = particles.size();
-  // for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
-  // {
-  //   // x1, y1 and z1 have the neighbor indeces relative to current chare
-  //   migrateToCell(*iter, x1, y1, z1); 
-  //   if(x1!=0 || y1!=0 || z1!=0) 
-  //   {
-  //     outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
-  //     //outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back((*iter));
+  int size = particles.size();
+  for(std::vector<Particle>::reverse_iterator iter = particles.rbegin(); iter != particles.rend(); iter++) 
+  {
+    // x1, y1 and z1 have the neighbor indeces relative to current chare
+    migrateToCell(*iter, x1, y1, z1); 
+    if(x1!=0 || y1!=0 || z1!=0) 
+    {
+      outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back(wrapAround(*iter));
+      //outgoing[(x1+KAWAY_X)*NBRS_Y*NBRS_Z + (y1+KAWAY_Y)*NBRS_Z + (z1+KAWAY_Z)].push_back((*iter));
 
-  //     std::swap(*iter, particles[size - 1]);
-  //     size--;
-  //   }
-  // }
-  // ////CkPrintf("Check 2 from chare %d\n",id);
+      std::swap(*iter, particles[size - 1]);
+      size--;
+    }
+  }
+  ////CkPrintf("Check 2 from chare %d\n",id);
 
-  // particles.resize(size);
-  // for(int num = 0; num < inbrs; num++) 
-  // {
-  //   x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
-  //   y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
-  //   z1 = num % NBRS_Z                       - NBRS_Z/2;
-  //   cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
-  // }
-  // ////CkPrintf("Check 3 from chare %d\n",id);
+  particles.resize(size);
+  for(int num = 0; num < inbrs; num++) 
+  {
+    x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
+    y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
+    z1 = num % NBRS_Z                       - NBRS_Z/2;
+    cellArray(WRAP_X(thisIndex.x+x1), WRAP_Y(thisIndex.y+y1), WRAP_Z(thisIndex.z+z1)).receiveParticles(outgoing[num]);
+  }
+  ////CkPrintf("Check 3 from chare %d\n",id);
 
 }
 

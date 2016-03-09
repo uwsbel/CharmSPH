@@ -32,25 +32,6 @@ void Compute::selfInteractSPH(ParticleDataMsg *msg){
   delete msg;
 }
 
-// //interaction within a cell
-// void Compute::selfInteract(ParticleDataMsg *msg){
-//   double energyP = 0;
-//   std::vector<vec3> force1;
-
-//   energyP = calcInternalForces(msg, stepCount, force1);
-
-//   //energy assignment only in begining and end
-//   if (stepCount == 1) energy[0] = energyP;
-//   else if (stepCount == finalStepCount) energy[1] = energyP;
-
-//   //contribute to force reduction
-//   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-//   CkGetSectionInfo(mcast1, msg);
-//   mCastGrp->contribute(sizeof(vec3) * msg->lengthAll, &force1[0], CkReduction::sum_double, mcast1);
-
-//   delete msg;
-// }
-
 //interaction between two cells
 void Compute::interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
   CkSectionInfo *handleA = &mcast1;
@@ -74,31 +55,6 @@ void Compute::interactSPH(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
   delete msg1;
   delete msg2;
 }
-
-// //interaction between two cells
-// void Compute::interact(ParticleDataMsg *msg1, ParticleDataMsg *msg2){
-//   CkSectionInfo *handleA = &mcast1, *handleB = &mcast2;
-//   if (msg2->x * cellArrayDim.y * cellArrayDim.z + msg2->y * cellArrayDim.z + msg2->z <
-//       msg1->x * cellArrayDim.y * cellArrayDim.z + msg1->y * cellArrayDim.z + msg1->z)
-//     swap(handleA, handleB);
-
-//   std::vector<vec3> force1, force2;
-//   double energyP = calcPairForces(msg1, msg2, stepCount, force1, force2);
-
-//   //energy assignment only in begining and end
-//   if (stepCount == 1) energy[0] = energyP;
-//   else if (stepCount == finalStepCount) energy[1] = energyP;
-
-//   //contribute to force reduction
-//   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-//   CkGetSectionInfo(*handleA, msg1);
-//   mCastGrp->contribute(sizeof(vec3)*msg1->lengthAll, &force1[0], CkReduction::sum_double, *handleA);
-//   CkGetSectionInfo(*handleB, msg2);
-//   mCastGrp->contribute(sizeof(vec3)*msg2->lengthAll, &force2[0], CkReduction::sum_double, *handleB);
-
-//   delete msg1;
-//   delete msg2;
-// }
 
 //pack important information if I am moving
 void Compute::pup(PUP::er &p) {

@@ -46,9 +46,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > fluidMin.z && p.pos.z < domainMax.z) && 
-                (p.pos.x > fluidMin.x && p.pos.x < (domainMax.x/2)) &&
-                (p.pos.y > fluidMin.y && p.pos.y < (domainMax.y/2)))
+        else if((p.pos.z > (fluidMin.z) && p.pos.z < (domainMax.z)) && 
+                (p.pos.x > (fluidMin.x) && p.pos.x < (domainMax.x / 2)) &&
+                (p.pos.y > (fluidMin.y) && p.pos.y < (domainMax.y / 2)))
         // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
         //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
         //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
@@ -212,7 +212,7 @@ void Cell::writeCell(int stepCount)
     for(int i = 0;i < particles.size();i++)
     {
       Particle p = particles[i];
-      if(p.typeOfParticle==-1)
+      //if(p.typeOfParticle==-1)
       {
         ssParticles << p.pos.x << ',';
         ssParticles << p.pos.y << ',';

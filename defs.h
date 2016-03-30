@@ -40,8 +40,8 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (1e-3)
-#define H                       (0.025)
+#define DT                      (5e-4)
+#define H                       (0.05)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
@@ -50,7 +50,7 @@
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define MAXVEL                  (1.5)
+#define MAXVEL                  (1)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 

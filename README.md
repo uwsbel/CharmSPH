@@ -7,6 +7,21 @@ Cells are a dense 3D chare array that represent a spatial decomposition of the 3
 ## CharmSPH Development tips
 1. When developing the SPH side of CharmSPH you might want to make the code serial so it is easier to debug and track. In order to do this go to `Cell.cc` and look for the `createComputes()` function. Here you will have to uncomment and comment a few sections of the code. The comments in the file indicate what to comment and uncomment. Furthermore make sure that the cell size is the same as the domain size. For example if you want a 1x1x1 domain then make sure to hard code these values in `cellSize` at `Main.cc`.
 
+## Running on a Slurm Cluster
+1. Create an interactive job. In slurm this would be: 
+```
+srun -u bash -i
+```
+This gives us a single job with a single core. To get AMD only nodes use the following command instead: 
+```
+srun -u --gres=cputype:amd:1 bash -i
+```
+2. Now we want to allocate the resources needed to actually run the Charm program. These would be multiple nodes with an specific number of cores per node. To do this
+```
+salloc -N 4 --ntasks-per-node=64 --gres=cputype:amd:1 bash -i
+```
+Here we allocated 4 nodes with 64 threads per node (AMD nodes have 32 physical cores, and 64 logical cores).
+3. 
 ## Charm++ Development Workflows
 Charm++ is an unusual framework to develop for. Setting it up so a developer can code in an IDE is complicated, Windows development is not fully supported and if you are learning Charm++ running a program in a 2-4 cores machine (your laptop) is not the same as running your program in a development node (20-64 cores) or a few nodes. This section of the documentation includes different development setups various lab members use. 
 

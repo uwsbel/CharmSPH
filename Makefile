@@ -16,7 +16,7 @@ endif
 all: charmsph
 
 charmsph: Main.o Cell.o Compute.o charmsph.decl.h
-	$(CHARMC) $(OPTS) -module CkMulticast -module CommonLBs \
+	$(CHARMC) $(OPTS) -module CkMulticast -module CommonLBs -module CkIO \
 	-language charm++ -o charmsph$(SUFFIX) Main.o Cell.o Compute.o
 
 Main.o: Main.cc Main.h charmsph.decl.h defs.h

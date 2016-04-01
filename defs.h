@@ -244,4 +244,8 @@ extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
 extern /* readonly */ vec3 gravity;
 
+extern /* readonly */ int numChares;
+extern /* readonly */ int numLinesPerChare; 
+extern /* readonly */ int lineLength;
+
 #endif

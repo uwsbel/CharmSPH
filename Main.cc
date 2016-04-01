@@ -29,7 +29,12 @@
 /* readonly */ int checkptFreq; 
 /* readonly */ int checkptStrategy;
 /* readonly */ std::string logs;   
-/* readonly */ vec3 gravity;   
+/* readonly */ vec3 gravity;  
+
+/* Charm++ I/O Globals */
+/* readonly */ int numChares;
+/* readonly */ int numLinesPerChare; 
+/* readonly */ int lineLength; 
 
 // Entry point of Charm++ application
 Main::Main(CkArgMsg* m) 
@@ -42,6 +47,7 @@ Main::Main(CkArgMsg* m)
   system(mkMyDir.c_str());
   const std::string rmCmd = std::string("rm ") + out_dir + std::string("/*");
   system(rmCmd.c_str());
+  system("rm output2/*");
 
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
@@ -150,6 +156,12 @@ Main::Main(CkArgMsg* m)
   int patchCount = 0;
   float ratio = ((float)CkNumPes() - 1)/(cellArrayDim.x*cellArrayDim.y*cellArrayDim.z);
   computeArray = CProxy_Compute::ckNew();
+
+  // Set I/O parameters
+  numChares = cellArrayDim.x * cellArrayDim.y * cellArrayDim.z;
+  numLinesPerChare = 128; // Max of 200 particles per chare
+  lineLength = 128;
+  stepFiles.resize(1);
 
   for (int x=0; x<cellArrayDim.x; x++) {
     for (int y=0; y<cellArrayDim.y; y++) {

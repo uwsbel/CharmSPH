@@ -78,6 +78,9 @@ public:
   void writeCell(int stepCount);
   void startCheckpoint(int);
   void pup(PUP::er &p);
+  // void writeCellChare(Ck::IO::Session token);
+  void writeCellChare(Ck::IO::Session token, int step);
+  // void writeCellChare(int step);
 };
 
 #endif

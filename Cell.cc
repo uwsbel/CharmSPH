@@ -6,7 +6,6 @@
 #include "charmsph.decl.h"
 #include "Cell.h"
 #include "ckmulticast.h"
-#include "ckio.h"
 
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
@@ -188,49 +187,102 @@ void Cell::sendPositions(int iteration)
   mCastSecProxy.calculateForces(msg);
 }
 
+// void Cell::writeCellChare(Ck::IO::Session token)
+void Cell::writeCellChare(Ck::IO::Session token, int step)
+// void Cell::writeCellChare(int step)
+{
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+  // std::stringstream outputCellString;
+  // outputCellString << "Chare " << id << " ";
+  // outputCellString << "has " << particles.size() << " SPH markers";
+  // outputCellString << std::endl;
+  // CkPrintf(outputCellString.str().c_str());
+
+  int bytes = numLinesPerChare * lineLength;
+  int offset = bytes * id;
+
+  std::stringstream chareOutput;
+  if(id == 0){
+    chareOutput << "start" << std::endl;
+    chareOutput << "x,y,z,xVelocity,yVelocity,zVelocity,xAcc,yAcc,zAcc,velMagnitude,density";
+    chareOutput << ",pressure,mass,typeOfParticle" << std::endl;
+  }
+  else{
+    chareOutput << std::endl;
+  }
+  for(int i = 0;i < particles.size(); i++){
+
+    Particle p = particles[i];
+    //if(p.typeOfParticle==-1)
+    {
+      chareOutput << p.pos.x << ',';
+      chareOutput << p.pos.y << ',';
+      chareOutput << p.pos.z << ',';
+      chareOutput << p.vel.x << ',';
+      chareOutput << p.vel.y << ',';
+      chareOutput << p.vel.z << ',';
+      chareOutput << p.acc.x << ',';
+      chareOutput << p.acc.y << ',';
+      chareOutput << p.acc.z << ',';
+      chareOutput << sqrt(dot(p.vel,p.vel)) << ',';
+      chareOutput << p.rho << ',';
+      chareOutput << p.pressure << ',';
+      chareOutput << p.mass << ',';
+      chareOutput << p.typeOfParticle;
+      chareOutput << std::endl;
+    }
+  }
+  chareOutput << "end of chare";
+  std::string chareOutputString = chareOutput.str();
+  chareOutputString.resize(bytes);
+
+  Ck::IO::write(token, chareOutputString.c_str(), bytes, offset);
+}
+
+
 void Cell::writeCell(int stepCount)
 {
-    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+  int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
 
-    std::stringstream ssParticles;
-    ssParticles << "x,";
-    ssParticles << "y,";
-    ssParticles << "z,";
-    ssParticles << "xVelocity,";
-    ssParticles << "yVelocity,";
-    ssParticles << "zVelocity,";
-    ssParticles << "xAcc,";
-    ssParticles << "yAcc,";
-    ssParticles << "zAcc,";
-    ssParticles << "velMagnitude,";
-    ssParticles << "density,";
-    ssParticles << "pressure,";
-    ssParticles << "mass,";
-    ssParticles << "typeOfParticle";
-    ssParticles << std::endl;
+  std::stringstream ssParticles;
+  ssParticles << "x,";
+  ssParticles << "y,";
+  ssParticles << "z,";
+  ssParticles << "xVelocity,";
+  ssParticles << "yVelocity,";
+  ssParticles << "zVelocity,";
+  ssParticles << "xAcc,";
+  ssParticles << "yAcc,";
+  ssParticles << "zAcc,";
+  ssParticles << "velMagnitude,";
+  ssParticles << "density,";
+  ssParticles << "pressure,";
+  ssParticles << "mass,";
+  ssParticles << "typeOfParticle";
+  ssParticles << std::endl;
 
-    for(int i = 0;i < particles.size();i++)
+  for(int i = 0;i < particles.size();i++)
+  {
+    Particle p = particles[i];
+    //if(p.typeOfParticle==-1)
     {
-      Particle p = particles[i];
-      //if(p.typeOfParticle==-1)
-      {
-        ssParticles << p.pos.x << ',';
-        ssParticles << p.pos.y << ',';
-        ssParticles << p.pos.z << ',';
-        ssParticles << p.vel.x << ',';
-        ssParticles << p.vel.y << ',';
-        ssParticles << p.vel.z << ',';
-        ssParticles << p.acc.x << ',';
-        ssParticles << p.acc.y << ',';
-        ssParticles << p.acc.z << ',';
-        ssParticles << sqrt(dot(p.vel,p.vel)) << ',';
-        ssParticles << p.rho << ',';
-        ssParticles << p.pressure << ',';
-        ssParticles << p.mass << ',';
-        ssParticles << p.typeOfParticle;
-        ssParticles << std::endl;
-      }
+      ssParticles << p.pos.x << ',';
+      ssParticles << p.pos.y << ',';
+      ssParticles << p.pos.z << ',';
+      ssParticles << p.vel.x << ',';
+      ssParticles << p.vel.y << ',';
+      ssParticles << p.vel.z << ',';
+      ssParticles << p.acc.x << ',';
+      ssParticles << p.acc.y << ',';
+      ssParticles << p.acc.z << ',';
+      ssParticles << sqrt(dot(p.vel,p.vel)) << ',';
+      ssParticles << p.rho << ',';
+      ssParticles << p.pressure << ',';
+      ssParticles << p.mass << ',';
+      ssParticles << p.typeOfParticle;
+      ssParticles << std::endl;
     }
+  }
 
     std::ofstream fileNameParticles;
     std::stringstream ssFileNameParticles;

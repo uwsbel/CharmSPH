@@ -1,5 +1,6 @@
 mainmodule charmsph {
   include "pup_stl.h";
+  include "ckio.h";
 
   /* Charm++ Globals */
   readonly CProxy_Main mainProxy;       //central controller
@@ -25,9 +26,16 @@ mainmodule charmsph {
   readonly int checkptStrategy; // choose the checkpoint strategy
   readonly std::string logs;   // log file for checkpointing
   readonly vec3 gravity; 
+  
+  /* Charm++ I/O Globals */
+  readonly int numChares;
+  readonly int numLinesPerChare; 
+  readonly int lineLength;
+
 
   //central controller chare
-  mainchare [migratable] Main { 
+  mainchare [migratable] Main 
+  { 
     entry Main(CkArgMsg* msg);
     entry [reductiontarget] void energySum(double iE, double fE);  //reduction of potential energy
     // called when computes have been created
@@ -42,7 +50,6 @@ mainmodule charmsph {
         CkPrintf("Simulation Parameters: \n");
         CkPrintf("Gravity: ");
         gravity.print();
-
         cellArray.run();
         computeArray.run();
         startBenchmarkTime = CkWallTimer();
@@ -60,6 +67,87 @@ mainmodule charmsph {
         CkExit();
       }
     };
+
+    entry void ready(Ck::IO::FileReadyMsg *m);
+    entry void startWrite(Ck::IO::SessionReadyMsg *m);
+    entry void stepWritten(CkReductionMsg *m);
+    entry void closed(CkReductionMsg *m);
+
+    // entry void ready();
+    // entry void startWrite();
+    // entry void stepWritten();
+    // entry void closed();
+
+    entry void writeStep(int step, int iter)
+    {
+      serial {
+        CkPrintf("Writing step %d\n", step);
+        Ck::IO::Options opts;
+        /* How much contiguous data (in bytes) should be assigned to each active PE*/
+        opts.peStripe = 200; // Amount of contiguous data
+        /* How much contiguous data (in bytes) should a PE gather before writing it out */
+        opts.writeStripe = 1;
+        /* The Callback is a generic way to call an entry method once some library call is done */
+        CkCallback opened(CkIndex_Main::ready(NULL), thisProxy);
+        opened.setRefnum(0);
+        char name[20];
+        sprintf(name, "output2/step.%d.csv", step);
+
+        //cellArray.writeCellChare(step);
+        // opened.send(NULL);
+        /* Once open is done the opened callback will call CkIndex_Main::ready */
+        Ck::IO::open(name, opened, opts);
+      }
+
+      //when ready() serial {
+      when ready(Ck::IO::FileReadyMsg *m) serial {
+        stepFiles.at(0) = m->file;
+        CkCallback sessionStart(CkIndex_Main::startWrite(0), thisProxy);
+        sessionStart.setRefnum(1); // refNum is just used to check at what point we are at
+        CkCallback sessionEnd(CkIndex_Main::stepWritten(0), thisProxy);
+        sessionEnd.setRefnum(2);
+
+        int fileSize = numChares * numLinesPerChare * lineLength;
+        int offset = 0;
+        // std::string h = "hello\n"; 
+        // The following line commits one last line to the file. In this case hello.
+        // // Ck::IO::startSession(f.at(iter/4), 10*n, 0, sessionStart,
+        //                      h.c_str(), h.size(), 10*n,
+        //                      sessionEnd);
+        Ck::IO::startSession(stepFiles.at(0), fileSize, offset, sessionStart, sessionEnd);
+      
+
+        CkPrintf("Main saw file ready the number of chares is %d\n", stepFiles.size());
+        delete m;
+      }
+
+      //when startWrite() serial {
+      when startWrite(Ck::IO::SessionReadyMsg *m) serial {
+        // testers = CProxy_test::ckNew(m->session, n);
+        cellArray.writeCellChare(m->session, step);
+        CkPrintf("Main saw session ready\n");
+        delete m;
+      }
+      
+      // when stepWritten() serial {
+      when stepWritten(CkReductionMsg *m) serial {
+        //delete m;
+        CkPrintf("Main saw write done\n");
+        // Read file and validate contents
+        CkCallback cb(CkIndex_Main::closed(0), thisProxy);
+        cb.setRefnum(3);
+        Ck::IO::close(stepFiles.at(0), cb);
+        delete m;
+      }
+
+      // when closed() serial {
+      when closed(CkReductionMsg *m) serial {
+        CkPrintf("Main saw close done\n");
+        delete m;
+      }
+    };
+
+
   };
 
   //message used to send particles to computes
@@ -77,7 +165,9 @@ mainmodule charmsph {
     entry void recvCheckPointDone();  //checkpointing done, resume application
     //entry [reductiontarget] void reduceForces(vec3 forces[n], int n);   //receives forces from my computes on my atoms
     entry [reductiontarget] void reduceForcesSPH(vec4 dVel_dRho[n], int n);   //receives forces from my computes on my atoms
-
+    //entry void writeCellChare(Ck::IO::Session token);
+    entry void writeCellChare(Ck::IO::Session token, int step);
+    // entry void writeCellChare(int step);
 
     //function to perform iterations for Cells
     entry void run() 
@@ -85,6 +175,7 @@ mainmodule charmsph {
       if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial 
       {
         stepTime = CkWallTimer();
+        mainProxy.writeStep(0, 0);
       }
 
       serial 
@@ -98,9 +189,10 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0)
+          if((stepCount % 100) == 0 && (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0))
           {
-            writeCell(stepCount);
+            //writeCell(stepCount);
+            mainProxy.writeStep(stepCount, 0);
           }
           //CkPrintf("1. First sendPositions\n"); 
           sendPositions(1); 

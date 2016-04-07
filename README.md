@@ -66,3 +66,26 @@ Finally if you don't have ssh without a password you should set it up because it
 4. Run charm++ code.
 
 The `rs` command only take a long time the first time you run it. After that every time you run it only take a few seconds.
+
+## Add feature to CharmSPH instruction
+
+Refer to this [tutorial on branches and merging] (https://github.com/Kunena/Kunena-Forum/wiki/Create-a-new-branch-with-git-and-manage-branches) for more info about these instructions. To add a feature to CharmSPH you will have to clone the repository, create a new branch for the feature, complete and test the feature, merge to master, and finally remove the feature branch. To this end you have to execute the following commands:
+
+```
+git clone https://github.com/uwsbel/CharmSPH.git
+git checkout -b [name_of_your_new_branch]
+git push origin [name_of_your_new_branch]
+git remote add [name_of_your_remote] 
+```
+
+The previous commands will create a new branch from master where you can work on you feature. If you execute `git branch` you will see a list of all the branches you have locally available. If you want to get all branches to your local copy execute `git fetch`. Finally once you are done working and testing the feature you can follow these commands:
+
+```
+git merge [name_of_your_remote]/develop
+git branch -d [name_of_your_new_branch]
+git push origin :[name_of_your_new_branch]
+```
+
+The last two command delete the local and remote branch you were working on.
+
+

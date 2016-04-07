@@ -188,59 +188,6 @@ void Cell::sendPositions(int iteration)
   mCastSecProxy.calculateForces(msg);
 }
 
-void Cell::writeCell(int stepCount)
-{
-    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
-
-    std::stringstream ssParticles;
-    ssParticles << "x,";
-    ssParticles << "y,";
-    ssParticles << "z,";
-    ssParticles << "xVelocity,";
-    ssParticles << "yVelocity,";
-    ssParticles << "zVelocity,";
-    ssParticles << "xAcc,";
-    ssParticles << "yAcc,";
-    ssParticles << "zAcc,";
-    ssParticles << "velMagnitude,";
-    ssParticles << "density,";
-    ssParticles << "pressure,";
-    ssParticles << "mass,";
-    ssParticles << "typeOfParticle";
-    ssParticles << std::endl;
-
-    for(int i = 0;i < particles.size();i++)
-    {
-      Particle p = particles[i];
-      //if(p.typeOfParticle==-1)
-      {
-        ssParticles << p.pos.x << ',';
-        ssParticles << p.pos.y << ',';
-        ssParticles << p.pos.z << ',';
-        ssParticles << p.vel.x << ',';
-        ssParticles << p.vel.y << ',';
-        ssParticles << p.vel.z << ',';
-        ssParticles << p.acc.x << ',';
-        ssParticles << p.acc.y << ',';
-        ssParticles << p.acc.z << ',';
-        ssParticles << sqrt(dot(p.vel,p.vel)) << ',';
-        ssParticles << p.rho << ',';
-        ssParticles << p.pressure << ',';
-        ssParticles << p.mass << ',';
-        ssParticles << p.typeOfParticle;
-        ssParticles << std::endl;
-      }
-    }
-
-    std::ofstream fileNameParticles;
-    std::stringstream ssFileNameParticles;
-    ssFileNameParticles << "output/step." << stepCount << ".chare." << id;
-
-    fileNameParticles.open(ssFileNameParticles.str().c_str());
-    fileNameParticles<<ssParticles.str();
-    fileNameParticles.close();
-}
-
 //send the atoms that have moved beyond my cell to neighbors
 void Cell::migrateParticles(int step)
 {
@@ -402,4 +349,73 @@ void Cell::pup(PUP::er &p) {
     }
   }
 }
+
+void Cell::writeCell(int stepCount)
+{
+    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+    std::stringstream ssFluidParticles;
+    std::stringstream ssBoundaryParticles;
+
+    ssFluidParticles << "x,y,z,";
+    ssFluidParticles << "xVelocity,yVelocity,zVelocity,";
+    ssFluidParticles << "xAcc,yAcc,zAcc,";
+    ssFluidParticles << "velMagnitude,density,pressure,mass";
+    ssFluidParticles << std::endl;
+    ssBoundaryParticles << "x,y,z,";
+    ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";
+    ssBoundaryParticles << "xAcc,yAcc,zAcc,";
+    ssBoundaryParticles << "velMagnitude,density,pressure,mass";
+    ssBoundaryParticles << std::endl;
+
+    for(int i = 0;i < particles.size();i++)
+    {
+      Particle p = particles[i];
+      if(p.typeOfParticle==-1)
+      {
+        ssFluidParticles << p.pos.x << ',';
+        ssFluidParticles << p.pos.y << ',';
+        ssFluidParticles << p.pos.z << ',';
+        ssFluidParticles << p.vel.x << ',';
+        ssFluidParticles << p.vel.y << ',';
+        ssFluidParticles << p.vel.z << ',';
+        ssFluidParticles << p.acc.x << ',';
+        ssFluidParticles << p.acc.y << ',';
+        ssFluidParticles << p.acc.z << ',';
+        ssFluidParticles << sqrt(dot(p.vel,p.vel)) << ',';
+        ssFluidParticles << p.rho << ',';
+        ssFluidParticles << p.pressure << ',';
+        ssFluidParticles << std::endl;
+      }
+      else if(p.typeOfParticle==0)
+      {
+        ssBoundaryParticles << p.pos.x << ',';
+        ssBoundaryParticles << p.pos.y << ',';
+        ssBoundaryParticles << p.pos.z << ',';
+        ssBoundaryParticles << p.vel.x << ',';
+        ssBoundaryParticles << p.vel.y << ',';
+        ssBoundaryParticles << p.vel.z << ',';
+        ssBoundaryParticles << p.acc.x << ',';
+        ssBoundaryParticles << p.acc.y << ',';
+        ssBoundaryParticles << p.acc.z << ',';
+        ssBoundaryParticles << sqrt(dot(p.vel,p.vel)) << ',';
+        ssBoundaryParticles << p.rho << ',';
+        ssBoundaryParticles << p.pressure << ',';
+        ssBoundaryParticles << std::endl;
+      }
+    }
+
+    std::ofstream fileNameFluid, fileNameBoundary;
+    std::stringstream ssFileNameFluid, ssFileNameBoundary;
+    ssFileNameFluid << "output/fluid/fluid." << stepCount << ".chare." << id;
+    ssFileNameBoundary << "output/boundary/boundary." << stepCount << ".chare." << id;
+
+    fileNameFluid.open(ssFileNameFluid.str().c_str());
+    fileNameFluid << ssFluidParticles.str();
+    fileNameFluid.close();
+    fileNameBoundary.open(ssFileNameBoundary.str().c_str());
+    fileNameBoundary << ssBoundaryParticles.str();
+    fileNameBoundary.close();
+}
+
+
 

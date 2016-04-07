@@ -36,12 +36,7 @@ Main::Main(CkArgMsg* m)
 {
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
 
-  // Clear output directory
-  const std::string out_dir("output");
-  const std::string mkMyDir = std::string("mkdir ") + out_dir;
-  system(mkMyDir.c_str());
-  const std::string rmCmd = std::string("rm ") + out_dir + std::string("/*");
-  system(rmCmd.c_str());
+  initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
 
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
@@ -166,6 +161,26 @@ Main::Main(CkArgMsg* m)
 //constructor for chare object migration
 Main::Main(CkMigrateMessage* msg): CBase_Main(msg) 
 {
+}
+
+/**
+ * @brief initOutDirs
+ * @details mkdir output directories if the don't exist and delete old output from them if any.
+ */
+void Main::initOutDirs()
+{
+  // Clear output directory
+  const std::string outDir(" output");
+  const std::string fluidDir(" output/fluid");
+  const std::string boundaryDir(" output/boundary");
+  const std::string mkOutputDir = std::string("mkdir ") + outDir + fluidDir + boundaryDir;
+  system(mkOutputDir.c_str());
+  const std::string rmOutCmd = std::string("rm ") + outDir + std::string("/*");
+  const std::string rmFluidCmd = std::string("rm ") + fluidDir + std::string("/*");
+  const std::string rmBoundaryCmd = std::string("rm ") + boundaryDir + std::string("/*");
+  system(rmOutCmd.c_str());
+  system(rmFluidCmd.c_str());
+  system(rmBoundaryCmd.c_str());
 }
 
 //pup routine incase the main chare moves, pack important information

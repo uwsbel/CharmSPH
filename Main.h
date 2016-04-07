@@ -12,6 +12,7 @@ class Main : public CBase_Main {
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
+    void initOutDirs();
     void pup(PUP::er &p);
 };
 #endif

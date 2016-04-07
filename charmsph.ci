@@ -158,6 +158,12 @@ mainmodule charmsph {
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 0) 
         {
+          if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0){
+            serial {
+              CkPrintf("Load balancing! \n");
+            }
+          } 
+
           serial 
           { 
             AtSync(); 

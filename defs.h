@@ -24,8 +24,8 @@
 
 #define DEFAULT_DELTA           1	// in femtoseconds
 
-#define DEFAULT_FIRST_LDB       1000
-#define DEFAULT_LDB_PERIOD      5000
+#define DEFAULT_FIRST_LDB       100
+#define DEFAULT_LDB_PERIOD      500
 #define DEFAULT_FT_PERIOD       100000
 
 #define KAWAY_X                 1 //2 Original val
@@ -40,8 +40,8 @@
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
 
-#define DT                      (5e-4)
-#define H                       (0.05)
+#define DT                      (2e-4)
+#define H                       (0.04)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
@@ -237,9 +237,9 @@ extern /* readonly */ vec3 mDist;
 
 /* Charm++ Runtime System Globals */
 extern /* readonly */ int finalStepCount;
-//extern /* readonly */ int firstLdbStep; 
-//extern /* readonly */ int ldbPeriod;
-//extern /* readonly */ int checkptFreq; 
+extern /* readonly */ int firstLdbStep; 
+extern /* readonly */ int ldbPeriod;
+extern /* readonly */ int checkptFreq; 
 extern /* readonly */ int checkptStrategy;
 extern /* readonly */ std::string logs;
 extern /* readonly */ vec3 gravity;

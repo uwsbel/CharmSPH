@@ -175,7 +175,7 @@ mainmodule charmsph {
       if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial 
       {
         stepTime = CkWallTimer();
-        mainProxy.writeStep(0, 0);
+        //mainProxy.writeStep(0, 0);
       }
 
       serial 
@@ -189,10 +189,10 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0 && (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0))
+          if((stepCount % 100) == 0) //&& (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0))
           {
-            //writeCell(stepCount);
-            mainProxy.writeStep(stepCount, 0);
+            writeCell(stepCount);
+            // mainProxy.writeStep(stepCount, 0);
           }
           //CkPrintf("1. First sendPositions\n"); 
           sendPositions(1); 

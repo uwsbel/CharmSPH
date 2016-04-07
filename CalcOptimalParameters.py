@@ -1,12 +1,12 @@
 from math import pow
 
-num_charesPerCore = 100.0;
-num_particlesPerChare = 100.0;
+num_charesPerCore = 50.0;
+num_particlesPerChare = 80.0;
 max_numCores = 120.0;
 given_r_interaction = .02;
-x_dim = 1.5;
+x_dim = 2.0;
 y_dim = 2.0;
-z_dim = 1.5;
+z_dim = 2.0;
 
 
 v_domain = x_dim * y_dim * z_dim;
@@ -21,6 +21,11 @@ v_chare = v_domain / total_cellChares
 x_chareDim = pow(v_chare, 1.0/3.0);
 y_chareDim = pow(v_chare, 1.0/3.0);
 z_chareDim = pow(v_chare, 1.0/3.0);
+
+print("xChareDime: %.10f" % x_chareDim)
+print("yChareDime: %.10f" % y_chareDim)
+print("zChareDime: %.10f" % z_chareDim)
+
 
 calculated_num_particlesPerChareDim = (x_chareDim - (2.0 * wall_padding)) / given_r_interaction;
 given_num_particlesPerChareDim = pow(num_particlesPerChare, 1.0/3.0)

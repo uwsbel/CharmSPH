@@ -22,6 +22,18 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
+  // CkPrintf("domain Min: \n");
+  // domainMin.print();
+  // CkPrintf("domain Max: \n");
+  // domainMax.print();
+  // CkPrintf("boundary Min: \n");
+  // boundaryMin.print();
+  // CkPrintf("boundary Max: \n");
+  // boundaryMax.print();
+  // CkPrintf("Fluid Min: \n");
+  // fluidMin.print();
+  // CkPrintf("Fluid Max: \n");
+  // fluidMax.print();
   for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) 
   {
     for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) 
@@ -45,9 +57,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > (fluidMin.z) && p.pos.z < (domainMax.z)) && 
-                (p.pos.x > (fluidMin.x) && p.pos.x < (domainMax.x / 2)) &&
-                (p.pos.y > (fluidMin.y) && p.pos.y < (domainMax.y / 2)))
+        else if((p.pos.z > (boundaryMin.z + (H * 0.7)) && p.pos.z < (boundaryMax.z - (H * .7))) && 
+                (p.pos.x > (boundaryMin.x + (H * 0.7)) && p.pos.x < (boundaryMax.x / 2)) &&
+                (p.pos.y > (boundaryMin.y + (H * 0.7)) && p.pos.y < (boundaryMax.y / 2)))
         // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
         //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
         //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
@@ -213,7 +225,7 @@ void Cell::writeCellChare(Ck::IO::Session token, int step)
   for(int i = 0;i < particles.size(); i++){
 
     Particle p = particles[i];
-    //if(p.typeOfParticle==-1)
+    if(p.typeOfParticle==-1)
     {
       chareOutput << p.pos.x << ',';
       chareOutput << p.pos.y << ',';
@@ -264,7 +276,7 @@ void Cell::writeCell(int stepCount)
   for(int i = 0;i < particles.size();i++)
   {
     Particle p = particles[i];
-    //if(p.typeOfParticle==-1)
+    if(p.typeOfParticle==-1)
     {
       ssParticles << p.pos.x << ',';
       ssParticles << p.pos.y << ',';

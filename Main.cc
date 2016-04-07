@@ -32,7 +32,7 @@
 /* readonly */ vec3 gravity;  
 
 /* Charm++ I/O Globals */
-/* readonly */ int numChares;
+/* readonly */ int numCellChares;
 /* readonly */ int numLinesPerChare; 
 /* readonly */ int lineLength; 
 
@@ -158,7 +158,7 @@ Main::Main(CkArgMsg* m)
   computeArray = CProxy_Compute::ckNew();
 
   // Set I/O parameters
-  numChares = cellArrayDim.x * cellArrayDim.y * cellArrayDim.z;
+  numCellChares = cellArrayDim.x * cellArrayDim.y * cellArrayDim.z;
   numLinesPerChare = 128; // Max of 200 particles per chare
   lineLength = 128;
   stepFiles.resize(1);

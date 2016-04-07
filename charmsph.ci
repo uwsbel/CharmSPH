@@ -28,7 +28,7 @@ mainmodule charmsph {
   readonly vec3 gravity; 
   
   /* Charm++ I/O Globals */
-  readonly int numChares;
+  readonly int numCellChares;
   readonly int numLinesPerChare; 
   readonly int lineLength;
 
@@ -44,6 +44,7 @@ mainmodule charmsph {
       serial 
       {
         computeArray.doneInserting();
+        CkPrintf("Num Cell Chares: %d \n", numCellChares);
         CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
         CkPrintf("Computes numLocalElements: %d ....\n", computeArray.numLocalElements());
         CkPrintf("Starting simulation .... \n\n");
@@ -107,7 +108,7 @@ mainmodule charmsph {
         CkCallback sessionEnd(CkIndex_Main::stepWritten(0), thisProxy);
         sessionEnd.setRefnum(2);
 
-        int fileSize = numChares * numLinesPerChare * lineLength;
+        int fileSize = numCellChares * numLinesPerChare * lineLength;
         int offset = 0;
         // std::string h = "hello\n"; 
         // The following line commits one last line to the file. In this case hello.
@@ -189,7 +190,7 @@ mainmodule charmsph {
         //send current atom positions to my computes 
         serial 
         { 
-          if((stepCount % 100) == 0) //&& (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0))
+          if((stepCount % 500) == 0) //&& (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0))
           {
             writeCell(stepCount);
             // mainProxy.writeStep(stepCount, 0);
@@ -250,6 +251,10 @@ mainmodule charmsph {
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 0) 
         {
+          if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0) serial {
+            CkPrintf("Load balancing!\n");
+          }
+
           serial 
           { 
             AtSync(); 

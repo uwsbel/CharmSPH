@@ -39,115 +39,55 @@
 Main::Main(CkArgMsg* m) 
 {
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
-
+  mainProxy = thisProxy;
   initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
-  setDefaultParams();
+  setDefaultParams(); // Set default params. Keep these if args not set
+  
+  /* Parse input arguments */
+  for(int i = 1;i < m->argc;i++){
+    std::cout << "arg at " << i << " " << m->argv[i] << std::endl;
 
-  for(int i = 0;i < m->argc;i++){
-    std::cout << m->argv[i] << std::endl;
+    if (i + 1 != m->argc){ // Check that we haven't finished parsing already
+        if (strcmp(m->argv[i], "-x") == 0) {
+            domainDim.x = atof(m->argv[i + 1]);
+        } 
+        else if (strcmp(m->argv[i], "-y") == 0) {
+            domainDim.y = atof(m->argv[i + 1]);
+        } 
+        else if (strcmp(m->argv[i], "-z") == 0) {
+            domainDim.z = atof(m->argv[i + 1]);
+        } 
+        else if (strcmp(m->argv[i], "-t") == 0) {
+            finalStepCount = atoi(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-h") == 0) {
+            h = atof(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-dt") == 0) {
+            dt = atof(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-mv") == 0) {
+            maxVel = atof(m->argv[i + 1]);
+        }
+    }
   }
 
-  mainProxy = thisProxy;
-
-  //branch factor for spanning tree of multicast
-  int bFactor = 4;
-  //creating the multicast spanning tree
-  mCastGrpID = CProxy_CkMulticastMgr::ckNew(bFactor);
+  setDimensions();
+  gravity = vec3(0, GRAVITY, 0);
+  printParams();
 
   int numPes = CkNumPes();
   int currPe = -1, pe;
   int cur_arg = 1;
 
-  //read user parameters
-  //number of cells in each dimension
-
-  if (m->argc > cur_arg) 
-  {
-    // assume domainMin is (0, 0, 0)
-    domainDim.x=atof(m->argv[cur_arg++]);
-    domainDim.y=atof(m->argv[cur_arg++]);
-    domainDim.z=atof(m->argv[cur_arg++]);
-  }
-  domainMin = vec3(0, 0, 0);
-  domainMax = domainDim;
-
-  cellSize.x = 4 * h;
-  cellSize.y = 4 * h;
-  cellSize.z = 4 * h;
-
-  domainDim = domainMax - domainMin;
-
-  //set variable values to a default set
-  cellArrayDim.x = floor(domainDim.x / cellSize.x);
-  cellArrayDim.y = floor(domainDim.y / cellSize.y);
-  cellArrayDim.z = floor(domainDim.z / cellSize.z);
-
-  cellSize.x = domainDim.x / cellArrayDim.x;
-  cellSize.y = domainDim.y / cellArrayDim.y;
-  cellSize.z = domainDim.z / cellArrayDim.z;
-
-  // tune particle spacing based on cell size
-  mDist = vec3(1, 1, 1) * MarkDistMult * h;
-
-  int cNX = ceil(cellSize.x / mDist.x);
-  int cNY = ceil(cellSize.y / mDist.y);
-  int cNZ = ceil(cellSize.z / mDist.z);
-
-  mDist.x = cellSize.x / cNX;
-  mDist.y = cellSize.y / cNY;
-  mDist.z = cellSize.z / cNZ;
-
-  CkPrintf("mDist: \n");
-  mDist.print();
-
-  gravity = vec3(0, GRAVITY, 0);
-
-  CkPrintf("\nInput Parameters...\n");
+  int bFactor = 4; //branch factor for spanning tree of multicast
+  mCastGrpID = CProxy_CkMulticastMgr::ckNew(bFactor); //creating the multicast spanning tree
   
-  //number of steps in simulation
-  if (m->argc > cur_arg) 
-  {
-    finalStepCount=atoi(m->argv[cur_arg++]);
-    CkPrintf("Final Step Count:%d\n",finalStepCount);
-  }
-
-  //step after which load balancing starts
-  if (m->argc > cur_arg) 
-  {
-    firstLdbStep=atoi(m->argv[cur_arg++]);
-    CkPrintf("First LB Step:%d\n",firstLdbStep);
-  }
-
-  //periodicity of load balancing
-  if (m->argc > cur_arg) 
-  {
-    ldbPeriod=atoi(m->argv[cur_arg++]);
-    CkPrintf("LB Period:%d\n",ldbPeriod);
-  }
-
-  //periodicity of checkpointing
-  if (m->argc > cur_arg) 
-  {
-    checkptFreq=atoi(m->argv[cur_arg++]);
-    CkPrintf("FT Period:%d\n",checkptFreq);
-  }
-
-  checkptStrategy = 1;
-  //choose the checkpointing strategy use in disk checkpointing
-  if (m->argc > cur_arg) 
-  {
-    checkptStrategy = 0;
-    logs = m->argv[cur_arg];
-  }
-
-  printParams();
-
   cellArray = CProxy_Cell::ckNew();
+  computeArray = CProxy_Compute::ckNew();
   //initializing the 3D Patch array (with a uniform distribution) and 6D compute array
   int patchCount = 0;
-  float ratio = ((float)CkNumPes() - 1)/(cellArrayDim.x*cellArrayDim.y*cellArrayDim.z);
-  computeArray = CProxy_Compute::ckNew();
-
+  float ratio = ((float)CkNumPes() - 1)/(cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
   for (int x=0; x<cellArrayDim.x; x++) {
     for (int y=0; y<cellArrayDim.y; y++) {
       for (int z=0; z<cellArrayDim.z; z++) {
@@ -185,8 +125,46 @@ void Main::setDefaultParams()
   fluidMax = vec3(DEFAULT_FLUIDMAX_X, DEFAULT_FLUIDMAX_Y, DEFAULT_FLUIDMAX_Z);
 }
 
+void Main::setDimensions()
+{
+
+  //number of cells in each dimension
+  domainMin = vec3(0, 0, 0);
+  domainMax = domainDim;
+
+  cellSize.x = 4 * h;
+  cellSize.y = 4 * h;
+  cellSize.z = 4 * h;
+
+  domainDim = domainMax - domainMin;
+
+  //set variable values to a default set
+  cellArrayDim.x = floor(domainDim.x / cellSize.x);
+  cellArrayDim.y = floor(domainDim.y / cellSize.y);
+  cellArrayDim.z = floor(domainDim.z / cellSize.z);
+
+  cellSize.x = domainDim.x / cellArrayDim.x;
+  cellSize.y = domainDim.y / cellArrayDim.y;
+  cellSize.z = domainDim.z / cellArrayDim.z;
+
+  // tune particle spacing based on cell size
+  mDist = vec3(1, 1, 1) * MarkDistMult * h;
+
+  int cNX = ceil(cellSize.x / mDist.x);
+  int cNY = ceil(cellSize.y / mDist.y);
+  int cNZ = ceil(cellSize.z / mDist.z);
+
+  mDist.x = cellSize.x / cNX;
+  mDist.y = cellSize.y / cNY;
+  mDist.z = cellSize.z / cNZ;
+
+  CkPrintf("mDist: \n");
+  mDist.print();
+}
+
 void Main::printParams()
 {
+  std::cout << "************** SIMULATION PARAMETERS **************" << std::endl;
   std::cout << "dt = " << dt << std::endl;
   std::cout << "h = " << h << std::endl;
   std::cout << "maxVel = " << maxVel << std::endl;
@@ -197,6 +175,7 @@ void Main::printParams()
   std::cout << "domainMax = "; domainMax.print();
   std::cout << "fluidMin = "; fluidMin.print();
   std::cout << "fluidMax = "; fluidMax.print();
+  std::cout << "***************************************************" << std::endl;
 }
 
 /**

@@ -12,6 +12,7 @@ class Main : public CBase_Main {
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
+    void setDimensions();
     void setDefaultParams();
     void printParams();
     void initOutDirs();

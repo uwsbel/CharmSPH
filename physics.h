@@ -81,14 +81,14 @@ inline double calcDRho(double rho_i, vec3 vel_i,
                        double rho_j, vec3 vel_j, 
                        vec3 gradW)
 {
-  return (rho_i / rho_j) * PARTICLE_MASS * dot(vel_i - vel_j, gradW);
+  return (rho_i / rho_j) * particleMass * dot(vel_i - vel_j, gradW);
 }
 
 inline vec3 calcDVel(double rho_i, vec3 vel_i, double p_i, 
                      double rho_j, vec3 vel_j, double p_j, 
                      vec3 gradW, double r_ij_dot_gradW_overDist, double multViscosity)
 {
-  return gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+  return gradW * -1 * particleMass * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * particleMass * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
 }
 
 inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec4>& dVel_dRho)

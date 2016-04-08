@@ -9,7 +9,7 @@
 inline double Eos(double rho) 
 {
   int gama = 7;
-  double B = 100 * RHO0 * MAXVEL * MAXVEL / gama; 
+  double B = 100 * RHO0 * maxVel * maxVel / gama; 
   return B * (pow(rho / RHO0, gama) - 1) + BASEPRES;
 }
 

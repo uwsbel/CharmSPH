@@ -41,20 +41,15 @@
 
 #define DEFAULT_H               (0.05)
 #define DEFAULT_DT              (5e-4)
-#define DEFAULT_MAXVEL          (0.05)
+#define DEFAULT_MAXVEL          (1)
 
-
-
-//#define DT                      (5e-4)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
-#define PARTICLE_MASS           (DEFAULT_H * DEFAULT_H * DEFAULT_H * RHO0) // 8 Particles per spatial cube/chare
 #define MU                      (0.001)
 #define GRAVITY                 (-1)
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define MAXVEL                  (1)
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
@@ -232,7 +227,8 @@ extern /* readonly */ CkGroupID mCastGrpID;
 /* SPH Globals */
 extern /* readonly */ double h;
 extern /* readonly */ double dt;
-extern /* readonly */ double maxVel2;
+extern /* readonly */ double maxVel;
+extern /* readonly */ double particleMass;
 extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;

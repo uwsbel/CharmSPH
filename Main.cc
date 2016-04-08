@@ -15,7 +15,8 @@
 /* SPH Globals */
 /* readonly */ double h;
 /* readonly */ double dt;
-/* readonly */ double maxVel2;
+/* readonly */ double maxVel;
+/* readonly */ double particleMass;
 /* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
@@ -41,6 +42,10 @@ Main::Main(CkArgMsg* m)
 
   initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
   setDefaultParams();
+
+  for(int i = 0;i < m->argc;i++){
+    std::cout << m->argv[i] << std::endl;
+  }
 
   mainProxy = thisProxy;
 
@@ -171,6 +176,8 @@ void Main::setDefaultParams()
   /* SPH Default params */  
   h = DEFAULT_H;
   dt = DEFAULT_DT;
+  maxVel = DEFAULT_MAXVEL;
+  particleMass = h * h * h * RHO0;
   domainMin = vec3(DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MIN_Z);
   domainMax = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
   domainDim = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
@@ -182,8 +189,8 @@ void Main::printParams()
 {
   std::cout << "dt = " << dt << std::endl;
   std::cout << "h = " << h << std::endl;
-  std::cout << "maxVel = " << MAXVEL << std::endl;
-  std::cout << "particleMass = " << PARTICLE_MASS << std::endl;
+  std::cout << "maxVel = " << maxVel << std::endl;
+  std::cout << "particleMass = " << particleMass << std::endl;
   std::cout << "cutOffDist = " << PTP_CUT_OFF << std::endl;
   std::cout << "gravity = "; gravity.print();
   std::cout << "domainMin = "; domainMin.print();

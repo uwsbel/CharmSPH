@@ -10,7 +10,8 @@ mainmodule charmsph {
   /* SPH  Globals */
   readonly double h;
   readonly double dt;
-  readonly double maxVel2;
+  readonly double maxVel;
+  readonly double particleMass;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;

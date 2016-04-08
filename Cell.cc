@@ -33,7 +33,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.pos = vec3(px, py, pz) + cellMin;
         p.vel = vec3(0,0,0);
         p.acc = vec3(0,0,0);
-        p.mass = PARTICLE_MASS;
+        p.mass = particleMass;
         p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
@@ -289,10 +289,10 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
 
 inline double velocityCheck(double inVelocity) 
 {
-  if(fabs(inVelocity) > MAX_VELOCITY) 
+  if(fabs(inVelocity) > maxVel) 
   {
-    if(inVelocity < 0.0 ) return -MAX_VELOCITY;
-    else return MAX_VELOCITY;
+    if(inVelocity < 0.0 ) return -maxVel;
+    else return maxVel;
   } 
   else 
   {

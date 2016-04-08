@@ -8,6 +8,9 @@ mainmodule charmsph {
   readonly CkGroupID mCastGrpID;      //multicast group handle
   
   /* SPH  Globals */
+  readonly double h;
+  readonly double dt;
+  readonly double maxVel2;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;

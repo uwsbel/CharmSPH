@@ -12,9 +12,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   //load balancing to be called when AtSync is called
   usesAtSync = true;
 
-  double halfH = H / 2;
-  double HSquared = H * H;
-  double boundaryThickness = 3 * H;
+  double halfH = h / 2;
+  double hSquared = h * h;
+  double boundaryThickness = 3 * h;
   vec3 boundaryMin = domainMin + boundaryThickness;
   vec3 boundaryMax = domainMax - boundaryThickness;
 
@@ -46,12 +46,12 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > (fluidMin.z + 0.7 * H) && p.pos.z < (domainMax.z)) && 
-                (p.pos.x > (fluidMin.x + 0.7 * H) && p.pos.x < (domainMax.x / 2)) &&
-                (p.pos.y > (fluidMin.y + 0.7 * H) && p.pos.y < (domainMax.y / 2)))
-        // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
-        //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
-        //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
+        else if((p.pos.z > (boundaryMin.z + 0.7 * h) && p.pos.z < (boundaryMax.z)) && 
+                (p.pos.x > (boundaryMin.x + 0.7 * h) && p.pos.x < (boundaryMax.x / 2)) &&
+                (p.pos.y > (boundaryMin.y + 0.7 * h) && p.pos.y < (boundaryMax.y / 2)))
+        // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * h))) && 
+        //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * h))) &&
+        //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * h))))
         {
           p.typeOfParticle = -1; // Fluid Marker
           particles.push_back(p);  
@@ -261,10 +261,10 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles2[i].acc = dVel_dRho[i].r + gravity;
-        particles2[i].pos += particles2[i].vel * 0.5 * DT;
-        particles2[i].vel += particles2[i].acc * 0.5 * DT; 
+        particles2[i].pos += particles2[i].vel * 0.5 * dt;
+        particles2[i].vel += particles2[i].acc * 0.5 * dt; 
       }
-      particles2[i].rho += dVel_dRho[i].l * 0.5 * DT;
+      particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
       particles2[i].pressure = Eos(particles2[i].rho);
     }   
   }
@@ -276,10 +276,10 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles[i].acc = dVel_dRho[i].r + gravity;
-        particles[i].pos += particles[i].vel * DT;
-        particles[i].vel += particles[i].acc * DT; 
+        particles[i].pos += particles[i].vel * dt;
+        particles[i].vel += particles[i].acc * dt; 
       }
-       particles[i].rho += dVel_dRho[i].l * DT; // With constant presure the density shouldnt beupdated
+       particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
        particles[i].pressure = Eos(particles[i].rho);
 
     } 

@@ -13,6 +13,9 @@
 /* readonly */ CkGroupID mCastGrpID;
 
 /* SPH Globals */
+/* readonly */ double h;
+/* readonly */ double dt;
+/* readonly */ double maxVel2;
 /* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
@@ -37,11 +40,7 @@ Main::Main(CkArgMsg* m)
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
 
   initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
-
-  finalStepCount = DEFAULT_FINALSTEPCOUNT;
-  firstLdbStep = DEFAULT_FIRST_LDB;
-  ldbPeriod = DEFAULT_LDB_PERIOD;
-  checkptFreq = DEFAULT_FT_PERIOD;
+  setDefaultParams();
 
   mainProxy = thisProxy;
 
@@ -56,10 +55,6 @@ Main::Main(CkArgMsg* m)
 
   //read user parameters
   //number of cells in each dimension
-  domainMin = vec3(MIN_X, MIN_Y, MIN_Z);
-  domainMax = vec3(MAX_X, MAX_Y, MAX_Z);
-  fluidMin = vec3(FLUIDMIN_X, FLUIDMIN_Y, FLUIDMIN_Z);
-  fluidMax = vec3(FLUIDMAX_X, FLUIDMAX_Y, FLUIDMAX_Z);
 
   if (m->argc > cur_arg) 
   {
@@ -67,13 +62,13 @@ Main::Main(CkArgMsg* m)
     domainDim.x=atof(m->argv[cur_arg++]);
     domainDim.y=atof(m->argv[cur_arg++]);
     domainDim.z=atof(m->argv[cur_arg++]);
-    domainMin = vec3(0, 0, 0);
-    domainMax = domainDim;
   }
+  domainMin = vec3(0, 0, 0);
+  domainMax = domainDim;
 
-  cellSize.x = 4 * H;
-  cellSize.y = 4 * H;
-  cellSize.z = 4 * H;
+  cellSize.x = 4 * h;
+  cellSize.y = 4 * h;
+  cellSize.z = 4 * h;
 
   domainDim = domainMax - domainMin;
 
@@ -87,7 +82,7 @@ Main::Main(CkArgMsg* m)
   cellSize.z = domainDim.z / cellArrayDim.z;
 
   // tune particle spacing based on cell size
-  mDist = vec3(1, 1, 1) * MarkDistMult * H;
+  mDist = vec3(1, 1, 1) * MarkDistMult * h;
 
   int cNX = ceil(cellSize.x / mDist.x);
   int cNY = ceil(cellSize.y / mDist.y);
@@ -140,6 +135,8 @@ Main::Main(CkArgMsg* m)
     logs = m->argv[cur_arg];
   }
 
+  printParams();
+
   cellArray = CProxy_Cell::ckNew();
   //initializing the 3D Patch array (with a uniform distribution) and 6D compute array
   int patchCount = 0;
@@ -161,6 +158,38 @@ Main::Main(CkArgMsg* m)
 //constructor for chare object migration
 Main::Main(CkMigrateMessage* msg): CBase_Main(msg) 
 {
+}
+
+void Main::setDefaultParams()
+{
+  /* Charm++ Default params */  
+  finalStepCount = DEFAULT_FINALSTEPCOUNT;
+  firstLdbStep = DEFAULT_FIRST_LDB;
+  ldbPeriod = DEFAULT_LDB_PERIOD;
+  checkptFreq = DEFAULT_FT_PERIOD;
+
+  /* SPH Default params */  
+  h = DEFAULT_H;
+  dt = DEFAULT_DT;
+  domainMin = vec3(DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MIN_Z);
+  domainMax = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
+  domainDim = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
+  fluidMin = vec3(DEFAULT_FLUIDMIN_X, DEFAULT_FLUIDMIN_Y, DEFAULT_FLUIDMIN_Z);
+  fluidMax = vec3(DEFAULT_FLUIDMAX_X, DEFAULT_FLUIDMAX_Y, DEFAULT_FLUIDMAX_Z);
+}
+
+void Main::printParams()
+{
+  std::cout << "dt = " << dt << std::endl;
+  std::cout << "h = " << h << std::endl;
+  std::cout << "maxVel = " << MAXVEL << std::endl;
+  std::cout << "particleMass = " << PARTICLE_MASS << std::endl;
+  std::cout << "cutOffDist = " << PTP_CUT_OFF << std::endl;
+  std::cout << "gravity = "; gravity.print();
+  std::cout << "domainMin = "; domainMin.print();
+  std::cout << "domainMax = "; domainMax.print();
+  std::cout << "fluidMin = "; fluidMin.print();
+  std::cout << "fluidMax = "; fluidMax.print();
 }
 
 /**

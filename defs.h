@@ -39,12 +39,16 @@
 #define PI 3.1415926535897932384626433832795028841971693993751058
 #define INVPI 0.3183098861837906715377675267450287240689192914809128
 
+#define DEFAULT_H               (0.05)
+#define DEFAULT_DT              (5e-4)
+#define DEFAULT_MAXVEL          (0.05)
 
-#define DT                      (2e-4)
-#define H                       (0.04)
+
+
+//#define DT                      (5e-4)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
-#define PARTICLE_MASS           (H * H * H * RHO0) // 8 Particles per spatial cube/chare
+#define PARTICLE_MASS           (DEFAULT_H * DEFAULT_H * DEFAULT_H * RHO0) // 8 Particles per spatial cube/chare
 #define MU                      (0.001)
 #define GRAVITY                 (-1)
 #define PRESSURE_CONSTANT       (0.5)
@@ -54,25 +58,25 @@
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
-#define MIN_X 0
-#define MIN_Y 0
-#define MIN_Z 0
-#define MAX_X 1
-#define MAX_Y 1
-#define MAX_Z 1
-#define FLUIDMIN_X 3 * H
-#define FLUIDMIN_Y 3 * H
-#define FLUIDMIN_Z 3 * H
-#define FLUIDMAX_X 15 * H
-#define FLUIDMAX_Y 15 * H
-#define FLUIDMAX_Z 15 * H
+#define DEFAULT_MIN_X 0
+#define DEFAULT_MIN_Y 0
+#define DEFAULT_MIN_Z 0
+#define DEFAULT_MAX_X 1
+#define DEFAULT_MAX_Y 1
+#define DEFAULT_MAX_Z 1
+#define DEFAULT_FLUIDMIN_X 3 * DEFAULT_H
+#define DEFAULT_FLUIDMIN_Y 3 * DEFAULT_H
+#define DEFAULT_FLUIDMIN_Z 3 * DEFAULT_H
+#define DEFAULT_FLUIDMAX_X DEFAULT_MAX_X / 2
+#define DEFAULT_FLUIDMAX_Y DEFAULT_MAX_Y / 2
+#define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
 
 
 
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
-#define PTP_CUT_OFF             (2 * H) // cut off for atom to atom interactions
+#define PTP_CUT_OFF             (2 * DEFAULT_H) // cut off for atom to atom interactions
 #define CELL_MARGIN             0  // constant diff between cutoff and cell size
 #define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
 #define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
@@ -226,6 +230,9 @@ extern /* readonly */ CProxy_Compute computeArray;
 extern /* readonly */ CkGroupID mCastGrpID;
 
 /* SPH Globals */
+extern /* readonly */ double h;
+extern /* readonly */ double dt;
+extern /* readonly */ double maxVel2;
 extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;

@@ -367,11 +367,9 @@ void Cell::writeCell(int stepCount)
     ssBoundaryParticles << "velMagnitude,density,pressure,mass";
     ssBoundaryParticles << std::endl;
 
-    for(int i = 0;i < particles.size();i++)
-    {
+    for(int i = 0;i < particles.size();i++) {
       Particle p = particles[i];
-      if(p.typeOfParticle==-1)
-      {
+      if(p.typeOfParticle==-1) {
         ssFluidParticles << p.pos.x << ',';
         ssFluidParticles << p.pos.y << ',';
         ssFluidParticles << p.pos.z << ',';
@@ -386,8 +384,7 @@ void Cell::writeCell(int stepCount)
         ssFluidParticles << p.pressure << ',';
         ssFluidParticles << std::endl;
       }
-      else if(p.typeOfParticle==0)
-      {
+      else if(writeBoundary && p.typeOfParticle==0) {
         ssBoundaryParticles << p.pos.x << ',';
         ssBoundaryParticles << p.pos.y << ',';
         ssBoundaryParticles << p.pos.z << ',';

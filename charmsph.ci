@@ -12,6 +12,8 @@ mainmodule charmsph {
   readonly double dt;
   readonly double maxVel;
   readonly double particleMass;
+  readonly int writePeriod;
+  readonly bool writeBoundary;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;
@@ -79,20 +81,17 @@ mainmodule charmsph {
     entry void ResumeFromSync();    //resume from here after load balancing
     entry [reductiontarget] void startCheckpoint(); //reduction to start checkpointing
     entry void recvCheckPointDone();  //checkpointing done, resume application
-    //entry [reductiontarget] void reduceForces(vec3 forces[n], int n);   //receives forces from my computes on my atoms
-    entry [reductiontarget] void reduceForcesSPH(vec4 dVel_dRho[n], int n);   //receives forces from my computes on my atoms
+    entry [reductiontarget] void reduceForcesSPH(vec4 dVel_dRho[n], int n); //receives forces from my computes on my atoms
 
 
     //function to perform iterations for Cells
     entry void run() 
     {
-      if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial 
-      {
+      if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial {
         stepTime = CkWallTimer();
       }
 
-      serial 
-      { 
+      serial { 
         createSection(); 
         writeCell(0);
       }
@@ -100,10 +99,8 @@ mainmodule charmsph {
       for(stepCount = 1; stepCount <= finalStepCount; stepCount++) 
       {
         //send current atom positions to my computes 
-        serial 
-        { 
-          if((stepCount % 100) == 0)
-          {
+        serial { 
+          if((stepCount % writePeriod) == 0) {
             writeCell(stepCount);
           }
           //CkPrintf("1. First sendPositions\n"); 
@@ -112,41 +109,33 @@ mainmodule charmsph {
 
         //update properties of atoms using new force values 
         //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
-        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
-        { 
+        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
           //CkPrintf("3, reduceForces was called. First update properties\n"); 
           updatePropertiesSPH(dVel_dRho, 1); 
         }
 
-        serial 
-        { 
+        serial { 
           //CkPrintf("4. Second sendPositions\n"); 
           sendPositions(2); 
         } 
 
         //update properties of atoms using new force values 
-        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial 
-        { 
+        when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
           //CkPrintf("6. reduceForces was called for the second time.\n"); 
           updatePropertiesSPH(dVel_dRho, 2); 
         }
 
 
-        if ((stepCount %  MIGRATE_STEPCOUNT) == 0) 
-        {
+        if ((stepCount %  MIGRATE_STEPCOUNT) == 0) {
           //send atoms that have moved beyond my cell to neighbors
-          serial 
-          { 
+          serial { 
             migrateParticles(stepCount); 
           } 
     
           //receive particles from my neighbors
-          for(updateCount = 0; updateCount < inbrs; updateCount++) 
-          {
-            when receiveParticles(const std::vector<Particle> &updates) serial 
-            {
-              for (int i = 0; i < updates.size(); ++i)
-              {
+          for(updateCount = 0; updateCount < inbrs; updateCount++) {
+            when receiveParticles(const std::vector<Particle> &updates) serial {
+              for (int i = 0; i < updates.size(); ++i){
                 particles.push_back(updates[i]); //add particles that have moved from neighboring cells to my cell
               } 
             }
@@ -160,26 +149,22 @@ mainmodule charmsph {
         }
 
         //periodically call load balancer
-        if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 0) 
-        {
-          if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0){
+        if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 0) {
+          if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0) {
             serial {
               CkPrintf("Load balancing! \n");
             }
           } 
 
-          serial 
-          { 
+          serial { 
             AtSync(); 
           }
           when ResumeFromSync() { }
         }
 
         //periodically checkpointing
-        if (stepCount % checkptFreq == 0) 
-        {
-          serial 
-          {
+        if (stepCount % checkptFreq == 0) {
+          serial {
             //coordinate to start checkpointing
             if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0)
             {
@@ -200,21 +185,21 @@ mainmodule charmsph {
           }
           when recvCheckPointDone() { }
         }
-
-#if CMK_MEM_CHECKPOINT
-
-        //kill one of processes to demonstrate fault tolerance
-        if (stepCount == 60 && thisIndex.x == 1 && thisIndex.y == 1 && thisIndex.z == 0) serial {
-          if (CkHasCheckpoints()) {
-            CkPrintf("CkDieNow step 60\n");
-            CkDieNow();
-          }
-        }
-#endif
+// #if CMK_MEM_CHECKPOINT
+//         //kill one of processes to demonstrate fault tolerance
+//         if (stepCount == 60 && thisIndex.x == 1 && thisIndex.y == 1 && thisIndex.z == 0) serial {
+//           if (CkHasCheckpoints()) {
+//             CkPrintf("CkDieNow step 60\n");
+//             CkDieNow();
+//           }
+//         }
+// #endif
       }
 
       //everything done, reduction on kinetic energy
-      serial { contribute(2*sizeof(double), energy,CkReduction::sum_double, CkCallback(CkReductionTarget(Main,energySum),mainProxy)); }
+      serial { 
+        contribute(2*sizeof(double), energy, CkReduction::sum_double, CkCallback(CkReductionTarget(Main,energySum),mainProxy)); 
+      }
     };
   };
 
@@ -225,46 +210,37 @@ mainmodule charmsph {
     entry void calculateForces(ParticleDataMsg *msg);
 
     entry void run() {
-      for (stepCount = 1; stepCount <= finalStepCount; stepCount++) 
-      {
+      for (stepCount = 1; stepCount <= finalStepCount; stepCount++) {
         //self interaction check
         if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2)
         {
-          when calculateForces(ParticleDataMsg *msg) serial 
-          { 
-            //CkPrintf("2. First self interact...\n");
+          when calculateForces(ParticleDataMsg *msg) serial { 
             selfInteractSPH(msg); 
           }
-          when calculateForces(ParticleDataMsg *msg) serial 
-          { 
-            //CkPrintf("5. Second self interact...\n");
+          when calculateForces(ParticleDataMsg *msg) serial { 
             selfInteractSPH(msg); 
           }
         }
         else
         {
           //receive positions from two cells
-          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial 
-          { 
-            //CkPrintf("2. First interact");
+          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { 
             interactSPH(msg1, msg2); 
           }
-          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial 
-          { 
-            //CkPrintf("5. second interact");
-
+          when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { 
             interactSPH(msg1, msg2); 
           }
         }
         //periodically call load balancer
         if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod== 0) {
-          serial { AtSync();}
+          serial { 
+            AtSync();
+          }
           when ResumeFromSync() { }
         }
       }
       //everything done, reduction on potential energy
-      serial 
-      { 
+      serial { 
         contribute(2*sizeof(double),energy, CkReduction::sum_double, CkCallback(CkReductionTarget(Main,energySum),mainProxy)); 
       }
     };

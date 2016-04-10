@@ -17,6 +17,8 @@
 /* readonly */ double dt;
 /* readonly */ double maxVel;
 /* readonly */ double particleMass;
+/* readonly */ int writePeriod;
+/* readonly */ bool writeBoundary;
 /* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
@@ -43,12 +45,23 @@ Main::Main(CkArgMsg* m)
   initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
   setDefaultParams(); // Set default params. Keep these if args not set
   
-  /* Parse input arguments */
+  /**
+   *  Parse input arguments
+   *    * -x = x dimension
+   *    * -y = y dimension
+   *    * -z = z dimension
+   *    * -t = t is the total number of time steps
+   *    * -h = h is the particle interaction radius (cutoff radius)
+   *    * -dt = dt delta t at every time step
+   *    * -mv = mv is the estimate of the maximum velocity of the particles in the model.
+   *    * -wp = Write period. After every wp steps we write output
+   *    * -wb = Write boundary. 1 if you want to write the boundary, 0 if not.
+   */
   for(int i = 1;i < m->argc;i++){
     std::cout << "arg at " << i << " " << m->argv[i] << std::endl;
 
     if (i + 1 != m->argc){ // Check that we haven't finished parsing already
-        if (strcmp(m->argv[i], "-x") == 0) {
+        if (strcmp(m->argv[i], "-x") == 0) { 
             domainDim.x = atof(m->argv[i + 1]);
         } 
         else if (strcmp(m->argv[i], "-y") == 0) {
@@ -68,6 +81,12 @@ Main::Main(CkArgMsg* m)
         }
         else if (strcmp(m->argv[i], "-mv") == 0) {
             maxVel = atof(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-wp") == 0) {
+            writePeriod = atoi(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-mv") == 0) {
+            writeBoundary = atof(m->argv[i + 1]);
         }
     }
   }
@@ -101,9 +120,7 @@ Main::Main(CkArgMsg* m)
 }
 
 //constructor for chare object migration
-Main::Main(CkMigrateMessage* msg): CBase_Main(msg) 
-{
-}
+Main::Main(CkMigrateMessage* msg): CBase_Main(msg) {}
 
 void Main::setDefaultParams()
 {
@@ -117,6 +134,8 @@ void Main::setDefaultParams()
   h = DEFAULT_H;
   dt = DEFAULT_DT;
   maxVel = DEFAULT_MAXVEL;
+  writePeriod = DEFAULT_WRITEPERIOD;
+  writeBoundary = 0;
   particleMass = h * h * h * RHO0;
   domainMin = vec3(DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MIN_Z);
   domainMax = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
@@ -170,6 +189,8 @@ void Main::printParams()
   std::cout << "maxVel = " << maxVel << std::endl;
   std::cout << "particleMass = " << particleMass << std::endl;
   std::cout << "cutOffDist = " << PTP_CUT_OFF << std::endl;
+  std::cout << "write period = " << writePeriod << std::endl;
+  std::cout << "write boundary = " << writeBoundary << std::endl;
   std::cout << "gravity = "; gravity.print();
   std::cout << "domainMin = "; domainMin.print();
   std::cout << "domainMax = "; domainMax.print();

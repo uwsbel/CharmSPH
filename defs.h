@@ -42,17 +42,6 @@
 #define DEFAULT_H               (0.05)
 #define DEFAULT_DT              (5e-4)
 #define DEFAULT_MAXVEL          (1)
-
-#define MarkDistMult            (1.0)
-#define RHO0                    (1000)
-#define MU                      (0.001)
-#define GRAVITY                 (-1)
-#define PRESSURE_CONSTANT       (0.5)
-#define EPSILON                 (1e-2)
-#define BASEPRES                (0)
-#define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
-#define MULTVISCOSITY_FSI       (5.0)
-
 #define DEFAULT_MIN_X 0
 #define DEFAULT_MIN_Y 0
 #define DEFAULT_MIN_Z 0
@@ -65,6 +54,19 @@
 #define DEFAULT_FLUIDMAX_X DEFAULT_MAX_X / 2
 #define DEFAULT_FLUIDMAX_Y DEFAULT_MAX_Y / 2
 #define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
+#define DEFAULT_WRITEPERIOD 100
+
+#define MarkDistMult            (1.0)
+#define RHO0                    (1000)
+#define MU                      (0.001)
+#define GRAVITY                 (-1)
+#define PRESSURE_CONSTANT       (0.5)
+#define EPSILON                 (1e-2)
+#define BASEPRES                (0)
+#define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
+#define MULTVISCOSITY_FSI       (5.0)
+
+
 
 
 
@@ -229,6 +231,8 @@ extern /* readonly */ double h;
 extern /* readonly */ double dt;
 extern /* readonly */ double maxVel;
 extern /* readonly */ double particleMass;
+extern /* readonly */ int writePeriod;
+extern /* readonly */ bool writeBoundary;
 extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;

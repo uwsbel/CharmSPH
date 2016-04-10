@@ -56,6 +56,7 @@
 #define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
 #define DEFAULT_WRITEPERIOD 100
 
+#define CellSizeMult            (4.0)
 #define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define MU                      (0.001)
@@ -66,15 +67,11 @@
 #define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
-
-
-
-
 #define CELLARRAY_DIM_X         3
 #define CELLARRAY_DIM_Y         3
 #define CELLARRAY_DIM_Z         3
-#define PTP_CUT_OFF             (2 * DEFAULT_H) // cut off for atom to atom interactions
-#define CELL_MARGIN             0  // constant diff between cutoff and cell size
+// #define CELL_MARGIN             0  // constant diff between cutoff and cell size
+// #define PTP_CUT_OFF             2 * DEFAULT_H
 #define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
 #define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
 #define CELL_SIZEZ             (2 * PTP_CUT_OFF)/KAWAY_Z
@@ -231,6 +228,7 @@ extern /* readonly */ double h;
 extern /* readonly */ double dt;
 extern /* readonly */ double maxVel;
 extern /* readonly */ double particleMass;
+extern /* readonly */ double cutOffDist;
 extern /* readonly */ int writePeriod;
 extern /* readonly */ bool writeBoundary;
 extern /* readonly */ int3 cellArrayDim;

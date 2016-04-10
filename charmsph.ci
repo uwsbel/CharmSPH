@@ -12,6 +12,7 @@ mainmodule charmsph {
   readonly double dt;
   readonly double maxVel;
   readonly double particleMass;
+  readonly double cutOffDist;
   readonly int writePeriod;
   readonly bool writeBoundary;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
@@ -63,6 +64,7 @@ mainmodule charmsph {
           CkPrintf("\nEnergy conservation test passed for maximum allowed variation of %E units.\nSIMULATION SUCCESSFULL \n",ENERGY_VAR);
         }
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
+        writeTimingResults((double)(CkWallTimer() - startBenchmarkTime));
         CkExit();
       }
     };

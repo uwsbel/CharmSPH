@@ -1,10 +1,16 @@
+/* C++ includes */
 #include <string>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+/* Charm++ includes */
 #include "time.h"
 #include "ckmulticast.h"
+/* CharmSPH includes*/
 #include "Main.h"
 #include "Cell.h"
 #include "Compute.h"
-#include <iostream>
+
 
 /* Charm++ Globals */
 /* readonly */ CProxy_Main mainProxy;
@@ -17,6 +23,7 @@
 /* readonly */ double dt;
 /* readonly */ double maxVel;
 /* readonly */ double particleMass;
+/* readonly */ double cutOffDist;
 /* readonly */ int writePeriod;
 /* readonly */ bool writeBoundary;
 /* readonly */ int3 cellArrayDim;
@@ -137,6 +144,7 @@ void Main::setDefaultParams()
   writePeriod = DEFAULT_WRITEPERIOD;
   writeBoundary = 0;
   particleMass = h * h * h * RHO0;
+  cutOffDist = 2 * h;
   domainMin = vec3(DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MIN_Z);
   domainMax = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
   domainDim = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
@@ -151,9 +159,9 @@ void Main::setDimensions()
   domainMin = vec3(0, 0, 0);
   domainMax = domainDim;
 
-  cellSize.x = 4 * h;
-  cellSize.y = 4 * h;
-  cellSize.z = 4 * h;
+  cellSize.x = CellSizeMult * h;
+  cellSize.y = CellSizeMult * h;
+  cellSize.z = CellSizeMult * h;
 
   domainDim = domainMax - domainMin;
 
@@ -188,7 +196,7 @@ void Main::printParams()
   std::cout << "h = " << h << std::endl;
   std::cout << "maxVel = " << maxVel << std::endl;
   std::cout << "particleMass = " << particleMass << std::endl;
-  std::cout << "cutOffDist = " << PTP_CUT_OFF << std::endl;
+  std::cout << "cutOffDist = " << cutOffDist << std::endl;
   std::cout << "write period = " << writePeriod << std::endl;
   std::cout << "write boundary = " << writeBoundary << std::endl;
   std::cout << "gravity = "; gravity.print();
@@ -197,6 +205,26 @@ void Main::printParams()
   std::cout << "fluidMin = "; fluidMin.print();
   std::cout << "fluidMax = "; fluidMax.print();
   std::cout << "***************************************************" << std::endl;
+}
+
+// void Main::writeSimulationParams()
+// {
+
+// }
+
+void Main::writeTimingResults(double totalTime)
+{
+  double avgTimePerStep = totalTime / finalStepCount;
+  std::ofstream timingFile;
+  std::string filename = "output/timingResults.txt";
+  std::stringstream ssTimingResults;
+
+  ssTimingResults << "Average time per step: " << avgTimePerStep << std::endl;
+  ssTimingResults << "Total simulation time: " << totalTime << std::endl;
+
+  timingFile.open(filename.c_str());
+  timingFile << ssTimingResults.str();
+  timingFile.close();
 }
 
 /**

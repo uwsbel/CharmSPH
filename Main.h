@@ -12,6 +12,7 @@ class Main : public CBase_Main {
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
+    void writeTimingResults(double totalTime);
     void setDimensions();
     void setDefaultParams();
     void printParams();

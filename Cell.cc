@@ -1,12 +1,14 @@
+/* C++ includes */
 #include <sstream>
 #include <fstream>
 #include <iostream>
-
+/* Charm++ includes */
+#include "ckmulticast.h"
+#include "ckio.h"
+/* CharmSPH includes */
 #include "defs.h"
 #include "charmsph.decl.h"
 #include "Cell.h"
-#include "ckmulticast.h"
-#include "ckio.h"
 
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called

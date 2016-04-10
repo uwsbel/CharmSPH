@@ -130,7 +130,7 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         r_ij = Distance(pos_i, pos_j);
         absDist = magnitude(r_ij);
 
-        if (absDist > PTP_CUT_OFF)
+        if (absDist > cutOffDist)
         {
           continue;
         }
@@ -196,7 +196,7 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
 
 
           
-          if (absDist > PTP_CUT_OFF)
+          if (absDist > cutOffDist)
           {
             continue;
           }

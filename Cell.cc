@@ -405,8 +405,8 @@ void Cell::writeCell(int stepCount)
 
     std::ofstream fileNameFluid, fileNameBoundary;
     std::stringstream ssFileNameFluid, ssFileNameBoundary;
-    ssFileNameFluid << "output/fluid/fluid." << stepCount << ".chare." << id;
-    ssFileNameBoundary << "output/boundary/boundary." << stepCount << ".chare." << id;
+    ssFileNameFluid << "output/" << simID << "/fluid/fluid." << stepCount << ".chare." << id;
+    ssFileNameBoundary << "output/" << simID << "/boundary/boundary." << stepCount << ".chare." << id;
 
     fileNameFluid.open(ssFileNameFluid.str().c_str());
     fileNameFluid << ssFluidParticles.str();

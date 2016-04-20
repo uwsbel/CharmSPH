@@ -1,5 +1,4 @@
 /* C++ includes */
-#include <string>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -26,6 +25,7 @@
 /* readonly */ double cutOffDist;
 /* readonly */ int writePeriod;
 /* readonly */ bool writeBoundary;
+/* readonly */ std::string simID;
 /* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;
 /* readonly */ vec3 domainMax;
@@ -49,7 +49,6 @@ Main::Main(CkArgMsg* m)
 {
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
   mainProxy = thisProxy;
-  initOutDirs(); // Initialize the fluid and boundary dirs where outputs goes
   setDefaultParams(); // Set default params. Keep these if args not set
   
   /**
@@ -63,43 +62,51 @@ Main::Main(CkArgMsg* m)
    *    * -mv = mv is the estimate of the maximum velocity of the particles in the model.
    *    * -wp = Write period. After every wp steps we write output
    *    * -wb = Write boundary. 1 if you want to write the boundary, 0 if not.
+   *    * -csm = Cell Size Multiplier. How much should we multiply
    */
   for(int i = 1;i < m->argc;i++){
     std::cout << "arg at " << i << " " << m->argv[i] << std::endl;
 
     if (i + 1 != m->argc){ // Check that we haven't finished parsing already
         if (strcmp(m->argv[i], "-x") == 0) { 
-            domainDim.x = atof(m->argv[i + 1]);
+          domainDim.x = atof(m->argv[i + 1]);
         } 
         else if (strcmp(m->argv[i], "-y") == 0) {
-            domainDim.y = atof(m->argv[i + 1]);
+          domainDim.y = atof(m->argv[i + 1]);
         } 
         else if (strcmp(m->argv[i], "-z") == 0) {
-            domainDim.z = atof(m->argv[i + 1]);
+          domainDim.z = atof(m->argv[i + 1]);
         } 
         else if (strcmp(m->argv[i], "-t") == 0) {
-            finalStepCount = atoi(m->argv[i + 1]);
+          finalStepCount = atoi(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-h") == 0) {
-            h = atof(m->argv[i + 1]);
+          h = atof(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-dt") == 0) {
-            dt = atof(m->argv[i + 1]);
+          dt = atof(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-mv") == 0) {
-            maxVel = atof(m->argv[i + 1]);
+          maxVel = atof(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-wp") == 0) {
-            writePeriod = atoi(m->argv[i + 1]);
+          writePeriod = atoi(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-mv") == 0) {
-            writeBoundary = atof(m->argv[i + 1]);
+          writeBoundary = atof(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-csm") == 0){
+          cellSize.x = atof(m->argv[i + 1]) * h;
+          cellSize.y = atof(m->argv[i + 1]) * h;
+          cellSize.z = atof(m->argv[i + 1]) * h;
         }
     }
   }
 
   setDimensions();
   gravity = vec3(0, GRAVITY, 0);
+  simID = getSimulationID();
+  initOutDirs(simID); // Initialize the fluid and boundary dirs where outputs goes
   printParams();
 
   int numPes = CkNumPes();
@@ -159,9 +166,9 @@ void Main::setDimensions()
   domainMin = vec3(0, 0, 0);
   domainMax = domainDim;
 
-  cellSize.x = CellSizeMult * h;
-  cellSize.y = CellSizeMult * h;
-  cellSize.z = CellSizeMult * h;
+  cellSize.x = DEFAULT_CELLSIZEMULT * h;
+  cellSize.y = DEFAULT_CELLSIZEMULT * h;
+  cellSize.z = DEFAULT_CELLSIZEMULT * h;
 
   domainDim = domainMax - domainMin;
 
@@ -189,9 +196,29 @@ void Main::setDimensions()
   mDist.print();
 }
 
+/**
+ * @brief getSimulationID
+ * @details Put together the simulation ID using some of the main simulation parameters.
+ *               charmsph_h_CellSizeMult_numCores_dt_t.json
+ * @return simID
+ */
+std::string Main::getSimulationID()
+{
+  std::stringstream ssSimID;
+  ssSimID << h << "_";
+  ssSimID << cellSize.x / h << "_";
+  ssSimID << CkNumPes() << "_";
+  ssSimID << dt << "_";
+  ssSimID << finalStepCount << "_";
+  ssSimID << domainDim.x << "-" << domainDim.y << "-" << domainDim.z;
+
+  return ssSimID.str();
+}
+
 void Main::printParams()
 {
   std::cout << "************** SIMULATION PARAMETERS **************" << std::endl;
+  std::cout << "Simulation ID = " << getSimulationID() << std::endl;
   std::cout << "dt = " << dt << std::endl;
   std::cout << "h = " << h << std::endl;
   std::cout << "maxVel = " << maxVel << std::endl;
@@ -207,42 +234,76 @@ void Main::printParams()
   std::cout << "***************************************************" << std::endl;
 }
 
-// void Main::writeSimulationParams()
-// {
-
-// }
-
 void Main::writeTimingResults(double totalTime)
 {
   double avgTimePerStep = totalTime / finalStepCount;
   std::ofstream timingFile;
-  std::string filename = "output/timingResults.txt";
+  std::string filename = "output/" + simID + "/Timing.json";
   std::stringstream ssTimingResults;
 
-  ssTimingResults << "Average time per step: " << avgTimePerStep << std::endl;
-  ssTimingResults << "Total simulation time: " << totalTime << std::endl;
+  ssTimingResults << "{" << std::endl;
+  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep << std::endl;
+  ssTimingResults << "\"TotalSimTime\": " << totalTime << std::endl;
+  ssTimingResults << "}" << std::endl;
 
   timingFile.open(filename.c_str());
   timingFile << ssTimingResults.str();
   timingFile.close();
 }
 
+void Main::compileOutput()
+{
+  std::string cmd = "python compileOutput.py " + simID;
+  system(cmd.c_str());
+}
+
+void Main::writeSimParams()
+{
+  std::ofstream simParamsFile;
+  std::string filename = "output/" + simID + "/SimParams.json";
+  std::stringstream ssSimParams;
+
+  ssSimParams << "{" << std::endl;
+  ssSimParams << "\"simID\": " << simID << "," << std::endl;
+  ssSimParams << "\"h\": " << h << "," << std::endl;
+  ssSimParams << "\"dt\": " << dt << "," << std::endl;
+  ssSimParams << "\"maxVel\": " << maxVel << "," << std::endl;
+  ssSimParams << "\"particleMass\": " << particleMass << "," << std::endl;
+  ssSimParams << "\"cutOffDist\": " << cutOffDist << "," << std::endl;
+  ssSimParams << "\"numPes\": " << CkNumPes() << "," << std::endl;
+  ssSimParams << "\"numFluidMarkers\": " << 1000 << "," << std::endl;
+  ssSimParams << "\"numBoundaryMarkers\": " << 1000 << "," << std::endl;
+  ssSimParams << "\"numCellChares\": " << 1000 << "," << std::endl;
+  ssSimParams << "\"numComputeChares\": " << 1000 << "," << std::endl;
+  ssSimParams << "\"writePeriod\": " << writePeriod << "," << std::endl;
+  ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << std::endl;
+
+  ssSimParams << "}" << std::endl;
+
+  simParamsFile.open(filename.c_str());
+  simParamsFile << ssSimParams.str();
+  simParamsFile.close();
+}
+
 /**
  * @brief initOutDirs
  * @details mkdir output directories if the don't exist and delete old output from them if any.
  */
-void Main::initOutDirs()
+void Main::initOutDirs(std::string simID)
 {
   // Clear output directory
   const std::string outDir(" output");
-  const std::string fluidDir(" output/fluid");
-  const std::string boundaryDir(" output/boundary");
-  const std::string mkOutputDir = std::string("mkdir ") + outDir + fluidDir + boundaryDir;
+  const std::string simDir(" output/" + simID);
+  const std::string fluidDir(simDir + "/fluid");
+  const std::string boundaryDir(simDir + "/boundary");
+  const std::string mkOutputDir = std::string("mkdir ") + outDir + simDir + fluidDir + boundaryDir;
   system(mkOutputDir.c_str());
   const std::string rmOutCmd = std::string("rm ") + outDir + std::string("/*");
+  const std::string rmSimCmd = std::string("rm ") + simDir + std::string("/*");
   const std::string rmFluidCmd = std::string("rm ") + fluidDir + std::string("/*");
   const std::string rmBoundaryCmd = std::string("rm ") + boundaryDir + std::string("/*");
   system(rmOutCmd.c_str());
+  system(rmSimCmd.c_str());
   system(rmFluidCmd.c_str());
   system(rmBoundaryCmd.c_str());
 }

@@ -55,6 +55,7 @@
 #define DEFAULT_FLUIDMAX_Y DEFAULT_MAX_Y / 2
 #define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
 #define DEFAULT_WRITEPERIOD 100
+#define DEFAULT_CELLSIZEMULT 4.0   
 
 #define CellSizeMult            (4.0)
 #define MarkDistMult            (1.0)
@@ -72,9 +73,9 @@
 #define CELLARRAY_DIM_Z         3
 // #define CELL_MARGIN             0  // constant diff between cutoff and cell size
 // #define PTP_CUT_OFF             2 * DEFAULT_H
-#define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
-#define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
-#define CELL_SIZEZ             (2 * PTP_CUT_OFF)/KAWAY_Z
+// #define CELL_SIZEX             (2 * PTP_CUT_OFF)/KAWAY_X // 
+// #define CELL_SIZEY             (2 * PTP_CUT_OFF)/KAWAY_Y
+// #define CELL_SIZEZ             (2 * PTP_CUT_OFF)/KAWAY_Z
 
 
 //variables to control initial uniform placement of atoms;
@@ -231,6 +232,7 @@ extern /* readonly */ double particleMass;
 extern /* readonly */ double cutOffDist;
 extern /* readonly */ int writePeriod;
 extern /* readonly */ bool writeBoundary;
+extern /* readonly */ std::string simID;
 extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;
 extern /* readonly */ vec3 domainMax;

@@ -15,6 +15,7 @@ mainmodule charmsph {
   readonly double cutOffDist;
   readonly int writePeriod;
   readonly bool writeBoundary;
+  readonly std::string simID;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
   readonly vec3 domainMin;
   readonly vec3 domainMax;
@@ -42,6 +43,7 @@ mainmodule charmsph {
     {
       serial 
       {
+        writeSimParams();
         computeArray.doneInserting();
         CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
         CkPrintf("Computes numLocalElements: %d ....\n", computeArray.numLocalElements());
@@ -65,6 +67,7 @@ mainmodule charmsph {
         }
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
         writeTimingResults((double)(CkWallTimer() - startBenchmarkTime));
+        compileOutput();
         CkExit();
       }
     };

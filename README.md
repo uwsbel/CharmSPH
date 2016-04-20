@@ -5,7 +5,9 @@ Charm++ implementation of Smoothed Particle Hydrodynamics for distributed memory
 1. [Algorithm Details](#algorithmdetails)
 2. [Development Tips](#developmenttips)
 3. [Running CharmSPH](#runningcharmsph)
-4. [Adding a feature to CharmSPH](#addfeature)
+4. [Parameters](#parameters)
+4. [Outputs](#outputs)
+5. [Adding a feature to CharmSPH](#addfeature)
 
 <a name="algorithmdetails">
 ## Algorithm Details
@@ -83,6 +85,43 @@ srun -u --gres=cputype:amd:1 bash -i
 salloc -N 4 --ntasks-per-node=64 --gres=cputype:amd:1 bash -i
 ```
 Here we allocated 4 nodes with 64 threads per node (AMD nodes have 32 physical cores, and 64 logical cores).
+3. 
+
+<a name="parameters">
+## Parameters
+</a>
+
+```
+  /**
+   *  Input Parameters
+   *    * -x = x dimension
+   *    * -y = y dimension
+   *    * -z = z dimension
+   *    * -t = t is the total number of time steps
+   *    * -h = h is the particle interaction radius (cutoff radius)
+   *    * -dt = dt delta t at every time step
+   *    * -mv = mv is the estimate of the maximum velocity of the particles in the model.
+   *    * -wp = Write period. After every wp steps we write output
+   *    * -wb = Write boundary. 1 if you want to write the boundary, 0 if not.
+   *    * -csm = Cell Size Multiplier. How much should we multiply
+   */
+```
+
+<a name="outputs">
+## Outputs
+</a>
+
+At every run certain parameters (look at parameters section) are set, which determine the output format. The following steps happen through the program.
+
+1. output folder is created if it does not exist.
+2. Inside the output folder a file with the following format is created:
+
+```
+    charmsph_h_CellSizeMult_numCores_dt_t.json
+```
+
+This file will contain the simulation parameters used.
+
 3. 
 
 <a name="addfeature">

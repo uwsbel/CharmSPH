@@ -32,7 +32,7 @@ Compute.o: Compute.cc Compute.h charmsph.decl.h defs.h physics.h
 	$(CHARMC) $(OPTS) -o Compute.o Compute.cc
 
 test: charmsph
-	./charmrun +p4 ./charmsph 4 4 4 10 3 3 +balancer GreedyLB +LBDebug 1 ++local
+	./charmrun +p4 ./charmsph 
 
 clean:
 	rm -f *.decl.h *.def.h *.o charmsph charmsph-ft charmsph.prj charmrun

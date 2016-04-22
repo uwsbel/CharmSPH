@@ -58,7 +58,7 @@ mainmodule charmsph {
         cellArray.run();
         computeArray.run();
         printParams();
-        writeSimParams();
+        writeSimParams(1);
         startBenchmarkTime = CkWallTimer();
       }     
 
@@ -72,6 +72,7 @@ mainmodule charmsph {
         }
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
         writeTimingResults((double)(CkWallTimer() - startBenchmarkTime));
+        writeSimParams(2);
         compileOutput();
         CkExit();
       }

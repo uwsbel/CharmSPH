@@ -275,10 +275,16 @@ void Main::compileOutput()
   system(cmd.c_str());
 }
 
-void Main::writeSimParams()
+void Main::writeSimParams(int flag)
 {
   std::ofstream simParamsFile;
-  std::string filename = "output/" + simID + "/SimParams.json";
+  std::string filename;
+  if(flag == 1){
+    filename = "output/" + simID + "/SimParams1.json";
+  }
+  else{
+    filename = "output/" + simID + "/SimParams2.json";
+  }
   std::stringstream ssSimParams;
 
   ssSimParams << "{" << std::endl;

@@ -16,7 +16,7 @@ class Main : public CBase_Main {
     Main(CkMigrateMessage* msg);
     std::string getSimulationID();
     void compileOutput();
-    void writeSimParams();
+    void writeSimParams(int flag);
     void writeTimingResults(double totalTime);
     void setDimensions();
     void setDefaultParams();

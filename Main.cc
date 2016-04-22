@@ -114,7 +114,7 @@ Main::Main(CkArgMsg* m)
         }
     }
   }
-
+  cutOffDist = 2 * h;
   setDimensions();
   gravity = vec3(0, GRAVITY, 0);
   simID = getSimulationID();

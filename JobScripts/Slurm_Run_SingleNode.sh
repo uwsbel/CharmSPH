@@ -8,7 +8,7 @@ make clean
 make
 
 
-./charmrun +p32 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.02 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
-./charmrun +p16 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.02 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
-./charmrun +p8 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.02 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
+./charmrun +p32 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.025 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
+./charmrun +p16 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.025 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
+./charmrun +p8 ./charmsph -x 2 -y 2 -z 2 -t 20000 -h 0.025 -dt 0.0002 -wb 1 -csm 4 -wp 250 -lbp 200
 

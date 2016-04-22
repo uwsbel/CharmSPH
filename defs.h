@@ -101,6 +101,9 @@ struct int3 {
   int x, y, z;
   int3(int d = 0) : x(d), y(d), z(d) { }
   int3(int x_, int y_, int z_) : x(x_), y(y_), z(z_) { }
+  void print(){
+    printf("x = %d, y = %d, z = %d \n", x, y, z);
+  }
 };
 
 struct vec3 {
@@ -108,8 +111,7 @@ struct vec3 {
 
   vec3(double d = 0.0) : x(d), y(d), z(d) { }
   vec3(double x_, double y_, double z_) : x(x_), y(y_), z(z_) { }
-  void print()
-  {
+  void print(){
     printf("x = %f, y = %f, z = %f \n", x, y, z);
   }
 
@@ -223,6 +225,8 @@ extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Cell cellArray;
 extern /* readonly */ CProxy_Compute computeArray;
 extern /* readonly */ CkGroupID mCastGrpID;
+extern /* readonly */ int numCells;
+extern /* readonly */ int numComputes;
 
 /* SPH Globals */
 extern /* readonly */ double h;
@@ -231,6 +235,8 @@ extern /* readonly */ double maxVel;
 extern /* readonly */ double particleMass;
 extern /* readonly */ double cutOffDist;
 extern /* readonly */ int writePeriod;
+extern /* readonly */ int numFluidMarkers;
+extern /* readonly */ int numBoundaryMarkers;
 extern /* readonly */ bool writeBoundary;
 extern /* readonly */ std::string simID;
 extern /* readonly */ int3 cellArrayDim;

@@ -6,6 +6,9 @@ mainmodule charmsph {
   readonly CProxy_Cell cellArray;     //array that houses atoms
   readonly CProxy_Compute computeArray; //computational kernels
   readonly CkGroupID mCastGrpID;      //multicast group handle
+  readonly int numCells;
+  readonly int numComputes;
+
   
   /* SPH  Globals */
   readonly double h;
@@ -14,6 +17,9 @@ mainmodule charmsph {
   readonly double particleMass;
   readonly double cutOffDist;
   readonly int writePeriod;
+  readonly int numFluidMarkers;
+  readonly int numBoundaryMarkers;
+
   readonly bool writeBoundary;
   readonly std::string simID;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
@@ -43,6 +49,7 @@ mainmodule charmsph {
     {
       serial 
       {
+        printParams();
         writeSimParams();
         computeArray.doneInserting();
         CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);

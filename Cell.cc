@@ -45,6 +45,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
            //(p.pos.y < boundaryMin.y))
         {
           p.typeOfParticle = 0; // Boundary Marker
+          numBoundaryMarkers++;
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
@@ -56,6 +57,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * h))))
         {
           p.typeOfParticle = -1; // Fluid Marker
+          numFluidMarkers++;
           particles.push_back(p);  
         }
       }
@@ -129,6 +131,7 @@ void Cell::createComputes() {
       CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
       computeArray[index].insert((++currPe) % CkNumPes());
       computesList[num] = index;
+      numComputes++;
     } 
     else 
     {

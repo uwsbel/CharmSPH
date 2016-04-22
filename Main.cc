@@ -16,6 +16,8 @@
 /* readonly */ CProxy_Cell cellArray;
 /* readonly */ CProxy_Compute computeArray;
 /* readonly */ CkGroupID mCastGrpID;
+/* readonly */ int numCells;
+/* readonly */ int numComputes;
 
 /* SPH Globals */
 /* readonly */ double h;
@@ -24,6 +26,8 @@
 /* readonly */ double particleMass;
 /* readonly */ double cutOffDist;
 /* readonly */ int writePeriod;
+/* readonly */ int numFluidMarkers;
+/* readonly */ int numBoundaryMarkers;
 /* readonly */ bool writeBoundary;
 /* readonly */ std::string simID;
 /* readonly */ int3 cellArrayDim;
@@ -50,6 +54,10 @@ Main::Main(CkArgMsg* m)
   CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
   mainProxy = thisProxy;
   setDefaultParams(); // Set default params. Keep these if args not set
+  numCells = 0;
+  numComputes = 0;
+  numFluidMarkers = 0;
+  numBoundaryMarkers = 0; 
   
   /**
    *  Parse input arguments
@@ -92,8 +100,8 @@ Main::Main(CkArgMsg* m)
         else if (strcmp(m->argv[i], "-wp") == 0) {
           writePeriod = atoi(m->argv[i + 1]);
         }
-        else if (strcmp(m->argv[i], "-mv") == 0) {
-          writeBoundary = atof(m->argv[i + 1]);
+        else if (strcmp(m->argv[i], "-wb") == 0) {
+          writeBoundary = atoi(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-csm") == 0){
           cellSize.x = atof(m->argv[i + 1]) * h;
@@ -107,7 +115,6 @@ Main::Main(CkArgMsg* m)
   gravity = vec3(0, GRAVITY, 0);
   simID = getSimulationID();
   initOutDirs(simID); // Initialize the fluid and boundary dirs where outputs goes
-  printParams();
 
   int numPes = CkNumPes();
   int currPe = -1, pe;
@@ -126,6 +133,7 @@ Main::Main(CkArgMsg* m)
       for (int z=0; z<cellArrayDim.z; z++) {
         cellArray(x, y, z).insert((int)(patchCount++ * ratio));
         cellArray(x, y, z).createComputes();
+        numCells++;
       }
     }
   }
@@ -226,7 +234,12 @@ void Main::printParams()
   std::cout << "cutOffDist = " << cutOffDist << std::endl;
   std::cout << "write period = " << writePeriod << std::endl;
   std::cout << "write boundary = " << writeBoundary << std::endl;
+  std::cout << "numCellChares = " << numCells << std::endl;
+  std::cout << "numComputeChares = " << numComputes << std::endl;
+  std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
+  std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
   std::cout << "gravity = "; gravity.print();
+  std::cout << "cellArrayDim = "; cellArrayDim.print();
   std::cout << "domainMin = "; domainMin.print();
   std::cout << "domainMax = "; domainMax.print();
   std::cout << "fluidMin = "; fluidMin.print();
@@ -264,19 +277,21 @@ void Main::writeSimParams()
   std::stringstream ssSimParams;
 
   ssSimParams << "{" << std::endl;
-  ssSimParams << "\"simID\": " << simID << "," << std::endl;
+  ssSimParams << "\"simID\": " << "\"" << simID << "\""  << "," << std::endl;
   ssSimParams << "\"h\": " << h << "," << std::endl;
   ssSimParams << "\"dt\": " << dt << "," << std::endl;
   ssSimParams << "\"maxVel\": " << maxVel << "," << std::endl;
   ssSimParams << "\"particleMass\": " << particleMass << "," << std::endl;
   ssSimParams << "\"cutOffDist\": " << cutOffDist << "," << std::endl;
   ssSimParams << "\"numPes\": " << CkNumPes() << "," << std::endl;
-  ssSimParams << "\"numFluidMarkers\": " << 1000 << "," << std::endl;
-  ssSimParams << "\"numBoundaryMarkers\": " << 1000 << "," << std::endl;
-  ssSimParams << "\"numCellChares\": " << 1000 << "," << std::endl;
-  ssSimParams << "\"numComputeChares\": " << 1000 << "," << std::endl;
+  ssSimParams << "\"numFluidMarkers\": " << numFluidMarkers << "," << std::endl;
+  ssSimParams << "\"numBoundaryMarkers\": " << numBoundaryMarkers << "," << std::endl;
+  ssSimParams << "\"numCellChares\": " << numCells << "," << std::endl;
+  ssSimParams << "\"numComputeChares\": " << numComputes << "," << std::endl;
   ssSimParams << "\"writePeriod\": " << writePeriod << "," << std::endl;
   ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << std::endl;
+  ssSimParams << "\"cellArrayDim\": [" << cellArrayDim.x << "," << cellArrayDim.y << "," << cellArrayDim.z << "]" << std::endl;
+
 
   ssSimParams << "}" << std::endl;
 

@@ -414,9 +414,13 @@ void Cell::writeCell(int stepCount)
     fileNameFluid.open(ssFileNameFluid.str().c_str());
     fileNameFluid << ssFluidParticles.str();
     fileNameFluid.close();
-    fileNameBoundary.open(ssFileNameBoundary.str().c_str());
-    fileNameBoundary << ssBoundaryParticles.str();
-    fileNameBoundary.close();
+
+    if(writeBoundary == 1){
+      fileNameBoundary.open(ssFileNameBoundary.str().c_str());
+      fileNameBoundary << ssBoundaryParticles.str();
+      fileNameBoundary.close();
+    }
+
 }
 
 

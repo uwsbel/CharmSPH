@@ -71,6 +71,7 @@ Main::Main(CkArgMsg* m)
    *    * -wp = Write period. After every wp steps we write output
    *    * -wb = Write boundary. 1 if you want to write the boundary, 0 if not.
    *    * -csm = Cell Size Multiplier. How much should we multiply
+   *    * -lbp = Load balance period
    */
   for(int i = 1;i < m->argc;i++){
     std::cout << "arg at " << i << " " << m->argv[i] << std::endl;
@@ -107,6 +108,9 @@ Main::Main(CkArgMsg* m)
           cellSize.x = atof(m->argv[i + 1]) * h;
           cellSize.y = atof(m->argv[i + 1]) * h;
           cellSize.z = atof(m->argv[i + 1]) * h;
+        }
+        else if (strcmp(m->argv[i], "-lbp") == 0) {
+          ldbPeriod = atof(m->argv[i + 1]);
         }
     }
   }
@@ -233,6 +237,7 @@ void Main::printParams()
   std::cout << "particleMass = " << particleMass << std::endl;
   std::cout << "cutOffDist = " << cutOffDist << std::endl;
   std::cout << "write period = " << writePeriod << std::endl;
+  std::cout << "ldbPeriod = " << ldbPeriod << std::endl;
   std::cout << "write boundary = " << writeBoundary << std::endl;
   std::cout << "numCellChares = " << numCells << std::endl;
   std::cout << "numComputeChares = " << numComputes << std::endl;

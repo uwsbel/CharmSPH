@@ -49,8 +49,6 @@ mainmodule charmsph {
     {
       serial 
       {
-        printParams();
-        writeSimParams();
         computeArray.doneInserting();
         CkPrintf("Computes: %d .... created\n", (NUM_NEIGHBORS/2+1)*cellArrayDim.x * cellArrayDim.y * cellArrayDim.z);
         CkPrintf("Computes numLocalElements: %d ....\n", computeArray.numLocalElements());
@@ -58,9 +56,10 @@ mainmodule charmsph {
         CkPrintf("Simulation Parameters: \n");
         CkPrintf("Gravity: ");
         gravity.print();
-
         cellArray.run();
         computeArray.run();
+        printParams();
+        writeSimParams();
         startBenchmarkTime = CkWallTimer();
       }     
 

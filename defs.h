@@ -237,7 +237,7 @@ extern /* readonly */ double cutOffDist;
 extern /* readonly */ int writePeriod;
 extern /* readonly */ int numFluidMarkers;
 extern /* readonly */ int numBoundaryMarkers;
-extern /* readonly */ bool writeBoundary;
+extern /* readonly */ int writeBoundary;
 extern /* readonly */ std::string simID;
 extern /* readonly */ int3 cellArrayDim;
 extern /* readonly */ vec3 domainMin;

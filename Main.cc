@@ -28,7 +28,7 @@
 /* readonly */ int writePeriod;
 /* readonly */ int numFluidMarkers;
 /* readonly */ int numBoundaryMarkers;
-/* readonly */ bool writeBoundary;
+/* readonly */ int writeBoundary;
 /* readonly */ std::string simID;
 /* readonly */ int3 cellArrayDim;
 /* readonly */ vec3 domainMin;

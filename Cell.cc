@@ -389,7 +389,7 @@ void Cell::writeCell(int stepCount)
         ssFluidParticles << p.pressure << ',';
         ssFluidParticles << std::endl;
       }
-      else if(writeBoundary && p.typeOfParticle==0) {
+      else if((writeBoundary==1) && p.typeOfParticle==0) {
         ssBoundaryParticles << p.pos.x << ',';
         ssBoundaryParticles << p.pos.y << ',';
         ssBoundaryParticles << p.pos.z << ',';

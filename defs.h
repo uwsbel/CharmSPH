@@ -41,7 +41,7 @@
 
 #define DEFAULT_H               (0.05)
 #define DEFAULT_DT              (1e-4)
-#define DEFAULT_MAXVEL          (1)
+#define DEFAULT_MAXVEL          (0.8)
 #define DEFAULT_MIN_X 0
 #define DEFAULT_MIN_Y 0
 #define DEFAULT_MIN_Z 0
@@ -54,11 +54,12 @@
 #define DEFAULT_FLUIDMAX_X DEFAULT_MAX_X / 2
 #define DEFAULT_FLUIDMAX_Y DEFAULT_MAX_Y / 2
 #define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
+#define DEFAULT_WRITE 1 
 #define DEFAULT_WRITEPERIOD 100
+#define DEFAULT_WRITEBOUNDARY 0 
 #define DEFAULT_CELLSIZEMULT 4.0   
+#define DEFAULT_MARKDISTMULT 1.0   
 
-#define CellSizeMult            (4.0)
-#define MarkDistMult            (1.0)
 #define RHO0                    (1000)
 #define MU                      (0.001)
 #define GRAVITY                 (-1)
@@ -234,9 +235,12 @@ extern /* readonly */ double dt;
 extern /* readonly */ double maxVel;
 extern /* readonly */ double particleMass;
 extern /* readonly */ double cutOffDist;
-extern /* readonly */ int writePeriod;
+extern /* readonly */ int markDistMult;
+extern /* readonly */ int cellSizeMult;
 extern /* readonly */ int numFluidMarkers;
 extern /* readonly */ int numBoundaryMarkers;
+extern /* readonly */ int writeAll;
+extern /* readonly */ int writePeriod;
 extern /* readonly */ int writeBoundary;
 extern /* readonly */ std::string simID;
 extern /* readonly */ int3 cellArrayDim;

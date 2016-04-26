@@ -9,16 +9,16 @@ mainmodule charmsph {
   readonly int numCells;
   readonly int numComputes;
 
-  
   /* SPH  Globals */
   readonly double h;
   readonly double dt;
   readonly double maxVel;
   readonly double particleMass;
   readonly double cutOffDist;
-  readonly int writePeriod;
   readonly int numFluidMarkers;
   readonly int numBoundaryMarkers;
+  readonly int writeAll;
+  readonly int writePeriod;
   readonly int writeBoundary;
   readonly std::string simID;
   readonly int3 cellArrayDim;   // Y dimension of the Cell array
@@ -111,7 +111,7 @@ mainmodule charmsph {
       {
         //send current atom positions to my computes 
         serial { 
-          if((stepCount % writePeriod) == 0) {
+          if(writeAll && ((stepCount % writePeriod) == 0)) {
             writeCell(stepCount);
           }
           //CkPrintf("1. First sendPositions\n"); 

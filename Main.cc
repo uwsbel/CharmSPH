@@ -25,9 +25,12 @@
 /* readonly */ double maxVel;
 /* readonly */ double particleMass;
 /* readonly */ double cutOffDist;
-/* readonly */ int writePeriod;
+/* readonly */ int cellSizeMult;
+/* readonly */ int markDistMult;
 /* readonly */ int numFluidMarkers;
 /* readonly */ int numBoundaryMarkers;
+/* readonly */ int writeAll;
+/* readonly */ int writePeriod;
 /* readonly */ int writeBoundary;
 /* readonly */ std::string simID;
 /* readonly */ int3 cellArrayDim;
@@ -68,9 +71,11 @@ Main::Main(CkArgMsg* m)
    *    * -h = h is the particle interaction radius (cutoff radius)
    *    * -dt = dt delta t at every time step
    *    * -mv = mv is the estimate of the maximum velocity of the particles in the model.
+   *    * -w = Write fluid.
    *    * -wp = Write period. After every wp steps we write output
    *    * -wb = Write boundary. 1 if you want to write the boundary, 0 if not.
    *    * -csm = Cell Size Multiplier. How much should we multiply
+   *    * -mdm = Marker Distance Multiplier. How much should we multiply
    *    * -lbp = Load balance period
    */
   for(int i = 1;i < m->argc;i++){
@@ -98,6 +103,9 @@ Main::Main(CkArgMsg* m)
         else if (strcmp(m->argv[i], "-mv") == 0) {
           maxVel = atof(m->argv[i + 1]);
         }
+        else if (strcmp(m->argv[i], "-w") == 0) {
+          writeAll = atoi(m->argv[i + 1]);
+        }
         else if (strcmp(m->argv[i], "-wp") == 0) {
           writePeriod = atoi(m->argv[i + 1]);
         }
@@ -105,15 +113,17 @@ Main::Main(CkArgMsg* m)
           writeBoundary = atoi(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-csm") == 0){
-          cellSize.x = atof(m->argv[i + 1]) * h;
-          cellSize.y = atof(m->argv[i + 1]) * h;
-          cellSize.z = atof(m->argv[i + 1]) * h;
+          cellSizeMult = atof(m->argv[i + 1]);
+        }
+        else if (strcmp(m->argv[i], "-mdm") == 0){
+          markDistMult = atof(m->argv[i + 1]);
         }
         else if (strcmp(m->argv[i], "-lbp") == 0) {
           ldbPeriod = atof(m->argv[i + 1]);
         }
     }
   }
+  particleMass = h * h * h * RHO0;
   cutOffDist = 2 * h;
   setDimensions();
   gravity = vec3(0, GRAVITY, 0);
@@ -160,10 +170,12 @@ void Main::setDefaultParams()
   h = DEFAULT_H;
   dt = DEFAULT_DT;
   maxVel = DEFAULT_MAXVEL;
+  markDistMult = DEFAULT_MARKDISTMULT;
+  cellSizeMult = DEFAULT_CELLSIZEMULT;
+
+  writeAll = DEFAULT_WRITE;
   writePeriod = DEFAULT_WRITEPERIOD;
-  writeBoundary = 0;
-  particleMass = h * h * h * RHO0;
-  cutOffDist = 2 * h;
+  writeBoundary = DEFAULT_WRITEBOUNDARY;
   domainMin = vec3(DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MIN_Z);
   domainMax = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
   domainDim = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
@@ -178,9 +190,9 @@ void Main::setDimensions()
   domainMin = vec3(0, 0, 0);
   domainMax = domainDim;
 
-  cellSize.x = DEFAULT_CELLSIZEMULT * h;
-  cellSize.y = DEFAULT_CELLSIZEMULT * h;
-  cellSize.z = DEFAULT_CELLSIZEMULT * h;
+  cellSize.x = cellSizeMult * h;
+  cellSize.y = cellSizeMult * h;
+  cellSize.z = cellSizeMult * h;
 
   domainDim = domainMax - domainMin;
 
@@ -194,7 +206,7 @@ void Main::setDimensions()
   cellSize.z = domainDim.z / cellArrayDim.z;
 
   // tune particle spacing based on cell size
-  mDist = vec3(1, 1, 1) * MarkDistMult * h;
+  mDist = vec3(1, 1, 1) * markDistMult * h;
 
   int cNX = ceil(cellSize.x / mDist.x);
   int cNY = ceil(cellSize.y / mDist.y);
@@ -236,8 +248,9 @@ void Main::printParams()
   std::cout << "maxVel = " << maxVel << std::endl;
   std::cout << "particleMass = " << particleMass << std::endl;
   std::cout << "cutOffDist = " << cutOffDist << std::endl;
-  std::cout << "write period = " << writePeriod << std::endl;
   std::cout << "ldbPeriod = " << ldbPeriod << std::endl;
+  std::cout << "write = " << writeAll << std::endl;
+  std::cout << "write period = " << writePeriod << std::endl;
   std::cout << "write boundary = " << writeBoundary << std::endl;
   std::cout << "numCellChares = " << numCells << std::endl;
   std::cout << "numComputeChares = " << numComputes << std::endl;
@@ -299,7 +312,9 @@ void Main::writeSimParams(int flag)
   ssSimParams << "\"numBoundaryMarkers\": " << numBoundaryMarkers << "," << std::endl;
   ssSimParams << "\"numCellChares\": " << numCells << "," << std::endl;
   ssSimParams << "\"numComputeChares\": " << numComputes << "," << std::endl;
+  ssSimParams << "\"write\": " << writeAll << "," << std::endl;
   ssSimParams << "\"writePeriod\": " << writePeriod << "," << std::endl;
+  ssSimParams << "\"writeBoundary\": " << writeBoundary << "," << std::endl;
   ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << std::endl;
   ssSimParams << "\"cellArrayDim\": [" << cellArrayDim.x << "," << cellArrayDim.y << "," << cellArrayDim.z << "]" << std::endl;
 

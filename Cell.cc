@@ -251,6 +251,19 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz)
 }
 
 
+inline double velocityCheck(double inVelocity) 
+{
+  if(fabs(inVelocity) > maxVel) 
+  {
+    if(inVelocity < 0.0 ) return -maxVel;
+    else return maxVel;
+  } 
+  else 
+  {
+    return inVelocity;
+  }
+}
+
 
 // Function to update properties (i.e. acceleration, velocity and position) in particles
 // add double dt arg, use particles 1 or 2
@@ -283,33 +296,17 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
         particles[i].acc = dVel_dRho[i].r + gravity;
         particles[i].pos += particles[i].vel * dt;
         particles[i].vel += particles[i].acc * dt; 
+
+        particles[i].vel.x = velocityCheck(particles[i].vel.x);
+        particles[i].vel.y = velocityCheck(particles[i].vel.y);
+        particles[i].vel.z = velocityCheck(particles[i].vel.z);
+
       }
        particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
        particles[i].pressure = Eos(particles[i].rho);
 
     } 
   }
-
-}
-
-inline double velocityCheck(double inVelocity) 
-{
-  if(fabs(inVelocity) > maxVel) 
-  {
-    if(inVelocity < 0.0 ) return -maxVel;
-    else return maxVel;
-  } 
-  else 
-  {
-    return inVelocity;
-  }
-}
-
-void Cell::limitVelocity(Particle &p) 
-{
-  p.vel.x = velocityCheck(p.vel.x);
-  p.vel.y = velocityCheck(p.vel.y);
-  p.vel.z = velocityCheck(p.vel.z);
 }
 
 Particle& Cell::wrapAround(Particle &p) 
@@ -369,7 +366,7 @@ void Cell::writeCell(int stepCount)
     ssBoundaryParticles << "x,y,z,";
     ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";
     ssBoundaryParticles << "xAcc,yAcc,zAcc,";
-    ssBoundaryParticles << "velMagnitude,density,pressure,mass";
+    ssBoundaryParticles << "velMagnitude,density,pressure";
     ssBoundaryParticles << std::endl;
 
     for(int i = 0;i < particles.size();i++) {

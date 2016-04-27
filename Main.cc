@@ -256,6 +256,7 @@ void Main::printParams()
   std::cout << "numComputeChares = " << numComputes << std::endl;
   std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
   std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
+  std::cout << "numPes = " << CkNumPes() << std::endl;
   std::cout << "gravity = "; gravity.print();
   std::cout << "cellArrayDim = "; cellArrayDim.print();
   std::cout << "domainMin = "; domainMin.print();

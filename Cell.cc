@@ -49,9 +49,9 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > (boundaryMin.z + 0.7 * h) && p.pos.z < (boundaryMax.z - 0.7 * h)) && 
-                (p.pos.x > (boundaryMin.x + 0.7 * h) && p.pos.x < (boundaryMax.x / 2)) &&
-                (p.pos.y > (boundaryMin.y + 0.7 * h) && p.pos.y < (boundaryMax.y / 2)))
+        else if((p.pos.z > (boundaryMin.z + 0.5 * h) && p.pos.z < (boundaryMax.z - 0.5 * h)) && 
+                (p.pos.x > (boundaryMin.x + 0.5 * h) && p.pos.x < (boundaryMax.x / 2)) &&
+                (p.pos.y > (boundaryMin.y + 0.5 * h) && p.pos.y < (boundaryMax.y / 2)))
         // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * h))) && 
         //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * h))) &&
         //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * h))))

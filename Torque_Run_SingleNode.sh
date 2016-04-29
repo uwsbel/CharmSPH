@@ -4,6 +4,8 @@
 #PBS -l walltime=05:00:00
 #PBS -N testjob
 
+#PBS -e $PBS_JOBID.err
+#PBS -o $PBS_JOBID.out
 
 . /opt/modules/default/init/bash
 module swap PrgEnv-cray PrgEnv-gnu

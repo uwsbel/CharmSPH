@@ -30,19 +30,28 @@ Charm++ implementation of Smoothed Particle Hydrodynamics for distributed memory
 	tar -zxvf charm-6.6.1.tar.gz
 	cd charm
 	```
-
-2. Blue Charm++. Refer to [Blue Waters Charm++ Reference Page](https://bluewaters.ncsa.illinois.edu/charm) for more information about the following commands:
-
-	```
-    ./build charm++ gni-crayxe smp --with-production --enable-tracing -j8
-	```
-This step takes a while (10+ minutes).
-
-3. Create an environment variable `CHARMDIR` that points to Charm++, charmc compiler. This is needed so no changes to the `Makefile` are needed. To do this open your `.bashrc` file, which should be on your home directory
+	
+2. Select the gnu compiler environment and load a hugepages module. Apparently there are some issues in craype-hugepages8M, so the Blue Waters staff recommended me to compile charm++ with craype-hugepages2M:
 
 	```
-	export CHARMDIR=~/charm
+	module swap PrgEnv-cray PrgEnv-gnu
+	module add craype-hugepages2M
 	```
+
+3. Blue Charm++. Refer to [Blue Waters Charm++ Reference Page](https://bluewaters.ncsa.illinois.edu/charm) for more information about the following commands:
+
+	```
+	./build charm++ gni-crayxe smp --with-production --enable-tracing -j8
+	```
+This step takes a few minutes.
+
+4. Create an environment variable `CHARMDIR` that points to Charm++, charmc compiler. This is needed so no changes to the `Makefile` are needed. To do this open your `.bashrc` file, which should be on your home directory
+
+	```
+	export CHARMDIR=~/charm/
+	```
+	
+5. Try out one of their examples and see if its working. But at this point you should be set to run an Charm++ program in BW.
 
 
 <a name="runningcharmsph">

@@ -361,7 +361,7 @@ void Cell::writeCell(int stepCount)
     ssFluidParticles << "x,y,z,";
     ssFluidParticles << "xVelocity,yVelocity,zVelocity,";
     ssFluidParticles << "xAcc,yAcc,zAcc,";
-    ssFluidParticles << "velMagnitude,density,pressure,mass";
+    ssFluidParticles << "velMagnitude,density,pressure";
     ssFluidParticles << std::endl;
     ssBoundaryParticles << "x,y,z,";
     ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";

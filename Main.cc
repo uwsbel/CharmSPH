@@ -257,8 +257,9 @@ void Main::printParams()
   std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
   std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
   std::cout << "numPes = " << CkNumPes() << std::endl;
+  std::cout << "cellArrayDim = "; cellSize.print();
   std::cout << "gravity = "; gravity.print();
-  std::cout << "cellArrayDim = "; cellArrayDim.print();
+  std::cout << "cellSize = "; cellArrayDim.print();
   std::cout << "domainMin = "; domainMin.print();
   std::cout << "domainMax = "; domainMax.print();
   std::cout << "fluidMin = "; fluidMin.print();
@@ -317,6 +318,7 @@ void Main::writeSimParams(int flag)
   ssSimParams << "\"writePeriod\": " << writePeriod << "," << std::endl;
   ssSimParams << "\"writeBoundary\": " << writeBoundary << "," << std::endl;
   ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << "," << std::endl;
+  ssSimParams << "\"cellSize\": [" << cellSize.x << "," << cellSize.y << "," << cellSize.z << "]" << "," << std::endl;
   ssSimParams << "\"cellArrayDim\": [" << cellArrayDim.x << "," << cellArrayDim.y << "," << cellArrayDim.z << "]" << std::endl;
 
 

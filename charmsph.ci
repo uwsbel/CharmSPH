@@ -73,7 +73,9 @@ mainmodule charmsph {
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
         writeTimingResults((double)(CkWallTimer() - startBenchmarkTime));
         writeSimParams(2);
-        compileOutput();
+        //if(writeAll){
+        //  compileOutput();
+        //}
         CkExit();
       }
     };

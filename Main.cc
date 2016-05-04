@@ -274,7 +274,7 @@ void Main::writeTimingResults(double totalTime)
   std::stringstream ssTimingResults;
 
   ssTimingResults << "{" << std::endl;
-  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep << std::endl;
+  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep  << "," << std::endl;
   ssTimingResults << "\"TotalSimTime\": " << totalTime << std::endl;
   ssTimingResults << "}" << std::endl;
 
@@ -316,7 +316,7 @@ void Main::writeSimParams(int flag)
   ssSimParams << "\"write\": " << writeAll << "," << std::endl;
   ssSimParams << "\"writePeriod\": " << writePeriod << "," << std::endl;
   ssSimParams << "\"writeBoundary\": " << writeBoundary << "," << std::endl;
-  ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << std::endl;
+  ssSimParams << "\"domainDim\": [" << domainDim.x << "," << domainDim.y << "," << domainDim.z << "]" << "," << std::endl;
   ssSimParams << "\"cellArrayDim\": [" << cellArrayDim.x << "," << cellArrayDim.y << "," << cellArrayDim.z << "]" << std::endl;
 
 

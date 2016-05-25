@@ -17,7 +17,6 @@ class Main : public CBase_Main {
     std::string getSimulationID();
     void compileOutput();
     void writeSimParams(int flag);
-    void writeTimingResults(double totalTime);
     void setDimensions();
     void setDefaultParams();
     void printParams();

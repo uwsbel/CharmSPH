@@ -22,7 +22,7 @@
 #define PARTICLES_PER_CELL_START        100 
 #define PARTICLES_PER_CELL_END          250
 
-#define DEFAULT_DELTA           1	// in femtoseconds
+#define DEFAULT_DELTA           1 // in femtoseconds
 
 #define DEFAULT_FIRST_LDB       100
 #define DEFAULT_LDB_PERIOD      500
@@ -31,7 +31,7 @@
 #define KAWAY_X                 1 //2 Original val
 #define KAWAY_Y                 1 //2
 #define KAWAY_Z                 1 //1
-#define NBRS_X	                ((2 * KAWAY_X) + 1)
+#define NBRS_X                  ((2 * KAWAY_X) + 1)
 #define NBRS_Y                  ((2 * KAWAY_Y) + 1)
 #define NBRS_Z                  ((2 * KAWAY_Z) + 1)
 #define NUM_NEIGHBORS           (NBRS_X * NBRS_Y * NBRS_Z)
@@ -87,16 +87,16 @@
 #define GAP                     3 
 
 #define CELL_ORIGIN_X           0
-#define CELL_ORIGIN_Y	          0
-#define CELL_ORIGIN_Z	          0
+#define CELL_ORIGIN_Y           0
+#define CELL_ORIGIN_Z           0
 
-#define MIGRATE_STEPCOUNT	      1
-#define DEFAULT_FINALSTEPCOUNT	1001
-#define MAX_VELOCITY		        .1  //in A/fs
+#define MIGRATE_STEPCOUNT       1
+#define DEFAULT_FINALSTEPCOUNT  1001
+#define MAX_VELOCITY            .1  //in A/fs
 
-#define WRAP_X(a)		(((a) + cellArrayDim.x) % cellArrayDim.x)
-#define WRAP_Y(a)		(((a) + cellArrayDim.y) % cellArrayDim.y)
-#define WRAP_Z(a)		(((a) + cellArrayDim.z) % cellArrayDim.z)
+#define WRAP_X(a)   (((a) + cellArrayDim.x) % cellArrayDim.x)
+#define WRAP_Y(a)   (((a) + cellArrayDim.y) % cellArrayDim.y)
+#define WRAP_Z(a)   (((a) + cellArrayDim.z) % cellArrayDim.z)
 
 struct int3 {
   int x, y, z;

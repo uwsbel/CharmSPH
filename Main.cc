@@ -257,31 +257,14 @@ void Main::printParams()
   std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
   std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
   std::cout << "numPes = " << CkNumPes() << std::endl;
-  std::cout << "cellArrayDim = "; cellSize.print();
+  std::cout << "cellArrayDim = "; cellArrayDim.print();
   std::cout << "gravity = "; gravity.print();
-  std::cout << "cellSize = "; cellArrayDim.print();
+  std::cout << "cellSize = "; cellSize.print();
   std::cout << "domainMin = "; domainMin.print();
   std::cout << "domainMax = "; domainMax.print();
   std::cout << "fluidMin = "; fluidMin.print();
   std::cout << "fluidMax = "; fluidMax.print();
   std::cout << "***************************************************" << std::endl;
-}
-
-void Main::writeTimingResults(double totalTime)
-{
-  double avgTimePerStep = totalTime / finalStepCount;
-  std::ofstream timingFile;
-  std::string filename = "output/" + simID + "/Timing.json";
-  std::stringstream ssTimingResults;
-
-  ssTimingResults << "{" << std::endl;
-  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep  << "," << std::endl;
-  ssTimingResults << "\"TotalSimTime\": " << totalTime << std::endl;
-  ssTimingResults << "}" << std::endl;
-
-  timingFile.open(filename.c_str());
-  timingFile << ssTimingResults.str();
-  timingFile.close();
 }
 
 void Main::compileOutput()

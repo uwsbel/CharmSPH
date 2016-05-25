@@ -31,9 +31,9 @@ mainmodule charmsph {
   readonly vec3 mDist;
 
   /* Charm++ RTS Globals */
-  readonly int finalStepCount;		// number of steps in the simulaion
-  readonly int firstLdbStep;		// begin load balancing after this many steps
-  readonly int ldbPeriod;		// load balancing period
+  readonly int finalStepCount;    // number of steps in the simulaion
+  readonly int firstLdbStep;    // begin load balancing after this many steps
+  readonly int ldbPeriod;   // load balancing period
   readonly int checkptFreq;     // do FT every period
   readonly int checkptStrategy; // choose the checkpoint strategy
   readonly std::string logs;   // log file for checkpointing
@@ -71,7 +71,6 @@ mainmodule charmsph {
           CkPrintf("\nEnergy conservation test passed for maximum allowed variation of %E units.\nSIMULATION SUCCESSFULL \n",ENERGY_VAR);
         }
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
-        writeTimingResults((double)(CkWallTimer() - startBenchmarkTime));
         writeSimParams(2);
         //if(writeAll){
         //  compileOutput();
@@ -102,39 +101,49 @@ mainmodule charmsph {
     {
       if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial {
         stepTime = CkWallTimer();
+        periodTime = CkWallTimer();
       }
 
       serial { 
         createSection(); 
-        writeCell(0);
+        if(writeAll){
+          writeCell(0);
+        }
       }
 
-      for(stepCount = 1; stepCount <= finalStepCount; stepCount++) 
-      {
-        //send current atom positions to my computes 
-        serial { 
-          if(writeAll && ((stepCount % writePeriod) == 0)) {
+      for(stepCount = 1; stepCount <= finalStepCount; stepCount++) {
+        // write data every n number of steps, where n = writePeriod.
+        if ((stepCount % writePeriod) == 0) serial {
+          if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) {
+            writeTimings((CkWallTimer() - periodTime)*1000, stepCount);
+            periodTime = CkWallTimer();
+          }
+          
+          if(writeAll) {
             writeCell(stepCount);
           }
-          //CkPrintf("1. First sendPositions\n"); 
-          sendPositions(1); 
-        } 
+        }        
+
+        //send current cell positions to my computes 
+        serial {
+          sendPositions(1);
+        }
 
         //update properties of atoms using new force values 
         //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
-          //CkPrintf("3, reduceForces was called. First update properties\n"); 
+          // CkPrintf("3, reduceForces was called. First update properties\n"); 
           updatePropertiesSPH(dVel_dRho, 1); 
         }
 
         serial { 
-          //CkPrintf("4. Second sendPositions\n"); 
+          // CkPrintf("4. Second sendPositions\n"); 
           sendPositions(2); 
         } 
 
         //update properties of atoms using new force values 
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
-          //CkPrintf("6. reduceForces was called for the second time.\n"); 
+          // CkPrintf("6. reduceForces was called for the second time.\n"); 
           updatePropertiesSPH(dVel_dRho, 2); 
         }
 
@@ -228,9 +237,11 @@ mainmodule charmsph {
         if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2)
         {
           when calculateForces(ParticleDataMsg *msg) serial { 
+            // CkPrintf("2. First selfInteract\n"); 
             selfInteractSPH(msg); 
           }
           when calculateForces(ParticleDataMsg *msg) serial { 
+            // CkPrintf("2. Second selfInteract\n"); 
             selfInteractSPH(msg); 
           }
         }
@@ -238,9 +249,11 @@ mainmodule charmsph {
         {
           //receive positions from two cells
           when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { 
+            // CkPrintf("First Interact\n"); 
             interactSPH(msg1, msg2); 
           }
           when calculateForces(ParticleDataMsg *msg1) when calculateForces(ParticleDataMsg *msg2) serial { 
+            // CkPrintf("Second Interact\n"); 
             interactSPH(msg1, msg2); 
           }
         }

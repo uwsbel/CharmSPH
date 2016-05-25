@@ -86,10 +86,10 @@ void Cell::createComputes() {
 
   /*  The computes X are inserted by a given cell:
    *
-   *	^  X  X  X
-   *	|  0  X  X
-   *	y  0  0  0
-   *	   x ---->
+   *  ^  X  X  X
+   *  |  0  X  X
+   *  y  0  0  0
+   *     x ---->
    */
 
   // for round robin insertion
@@ -361,7 +361,7 @@ void Cell::writeCell(int stepCount)
     ssFluidParticles << "x,y,z,";
     ssFluidParticles << "xVelocity,yVelocity,zVelocity,";
     ssFluidParticles << "xAcc,yAcc,zAcc,";
-    ssFluidParticles << "velMagnitude,density,pressure";
+    ssFluidParticles << "velMagnitude,density,pressure,mass";
     ssFluidParticles << std::endl;
     ssBoundaryParticles << "x,y,z,";
     ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";
@@ -420,5 +420,22 @@ void Cell::writeCell(int stepCount)
 
 }
 
+void Cell::writeTimings(double periodTime, int currStep)
+{
+  double avgTimePerStep = periodTime / writePeriod;
+  std::ofstream timingFile;
+  std::stringstream ssFilename;
+  std::stringstream ssTimingResults;
 
+  ssFilename << "output/" << simID << "/Timing_" << currStep << ".json";
+
+  ssTimingResults << "{" << std::endl;
+  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep  << "," << std::endl;
+  ssTimingResults << "\"TotalSimTime\": " << periodTime << std::endl;
+  ssTimingResults << "}" << std::endl;
+
+  timingFile.open(ssFilename.str().c_str());
+  timingFile << ssTimingResults.str();
+  timingFile.close();
+}
 

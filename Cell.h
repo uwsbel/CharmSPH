@@ -52,6 +52,7 @@ private:
   // number of interacting neighbors
   int inbrs;
   double stepTime;
+  double periodTime;
   int updateCount;
   // store kinetic energy - initial and final
   double energy[2];
@@ -76,6 +77,7 @@ public:
   void migrateParticles(int step);
   void sendPositions(int iteration);
   void writeCell(int stepCount);
+  void writeTimings(double periotTime, int stepCount);
   void startCheckpoint(int);
   void pup(PUP::er &p);
 };

@@ -27,8 +27,9 @@
 /* readonly */ double cutOffDist;
 /* readonly */ int cellSizeMult;
 /* readonly */ int markDistMult;
-/* readonly */ int numFluidMarkers;
-/* readonly */ int numBoundaryMarkers;
+///* readonly */ int numFluidMarkers;
+///* readonly */ int numBoundaryMarkers;
+/* readonly */ int numSPHMarkers;
 /* readonly */ int writeAll;
 /* readonly */ int writePeriod;
 /* readonly */ int writeBoundary;
@@ -39,6 +40,7 @@
 /* readonly */ vec3 domainDim;
 /* readonly */ vec3 fluidMin;
 /* readonly */ vec3 fluidMax;
+/* readonly */ vec3 boundaryMax;
 /* readonly */ vec3 cellSize;
 /* readonly */ vec3 mDist;
 
@@ -59,9 +61,9 @@ Main::Main(CkArgMsg* m)
   setDefaultParams(); // Set default params. Keep these if args not set
   numCells = 0;
   numComputes = 0;
-  numFluidMarkers = 0;
-  numBoundaryMarkers = 0; 
-  
+  // numFluidMarkers = 0;
+  // numBoundaryMarkers = 0; 
+  numSPHMarkers = 0;
   /**
    *  Parse input arguments
    *    * -x = x dimension
@@ -130,6 +132,18 @@ Main::Main(CkArgMsg* m)
   simID = getSimulationID();
   initOutDirs(simID); // Initialize the fluid and boundary dirs where outputs goes
 
+  numCells = cellArrayDim.x * cellArrayDim.y * cellArrayDim.z;
+  int3 numSPHMarkersPerCellDim;
+  numSPHMarkersPerCellDim.x = floor((cellSize.x - h)/h); // There is an h/2 padding in each cell. 
+  numSPHMarkersPerCellDim.y = floor((cellSize.y - h)/h); 
+  numSPHMarkersPerCellDim.z = floor((cellSize.z - h)/h); 
+  numSPHMarkers = numCells * numSPHMarkersPerCellDim.x * numSPHMarkersPerCellDim.y * numSPHMarkersPerCellDim.z; 
+  numComputes = (NUM_NEIGHBORS/2 + 1) * numCells;
+
+
+  printParams();
+  writeSimParams(1);
+
   int numPes = CkNumPes();
   int currPe = -1, pe;
   int cur_arg = 1;
@@ -147,7 +161,6 @@ Main::Main(CkArgMsg* m)
       for (int z=0; z<cellArrayDim.z; z++) {
         cellArray(x, y, z).insert((int)(patchCount++ * ratio));
         cellArray(x, y, z).createComputes();
-        numCells++;
       }
     }
   }
@@ -181,14 +194,21 @@ void Main::setDefaultParams()
   domainDim = vec3(DEFAULT_MAX_X, DEFAULT_MAX_Y, DEFAULT_MAX_Z);
   fluidMin = vec3(DEFAULT_FLUIDMIN_X, DEFAULT_FLUIDMIN_Y, DEFAULT_FLUIDMIN_Z);
   fluidMax = vec3(DEFAULT_FLUIDMAX_X, DEFAULT_FLUIDMAX_Y, DEFAULT_FLUIDMAX_Z);
+  boundaryMax = vec3(DEFAULT_BOUNDARYMAX_X, DEFAULT_BOUNDARYMAX_Y, DEFAULT_BOUNDARYMAX_Z);
 }
 
+/* Sets dimensions for a dam break */
 void Main::setDimensions()
 {
 
   //number of cells in each dimension
   domainMin = vec3(0, 0, 0);
   domainMax = domainDim;
+  fluidMin = domainMin + (3 * h);
+  fluidMax.x = domainDim.x / 2;
+  fluidMax.y = domainDim.y / 2;
+  fluidMax.z = domainDim.z - (3 * h);
+  boundaryMax = domainDim - (3 * h);
 
   cellSize.x = cellSizeMult * h;
   cellSize.y = cellSizeMult * h;
@@ -233,7 +253,6 @@ std::string Main::getSimulationID()
   ssSimID << cellSize.x / h << "_";
   ssSimID << CkNumPes() << "_";
   ssSimID << dt << "_";
-  ssSimID << finalStepCount << "_";
   ssSimID << domainDim.x << "-" << domainDim.y << "-" << domainDim.z;
 
   return ssSimID.str();
@@ -254,8 +273,9 @@ void Main::printParams()
   std::cout << "write boundary = " << writeBoundary << std::endl;
   std::cout << "numCellChares = " << numCells << std::endl;
   std::cout << "numComputeChares = " << numComputes << std::endl;
-  std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
-  std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
+  //std::cout << "numFluidMarkers = " << numFluidMarkers << std::endl;
+  //std::cout << "numBoundaryMarkers = " << numBoundaryMarkers << std::endl;
+  std::cout << "MaxNumSPHMarkers = " << numSPHMarkers << std::endl;
   std::cout << "numPes = " << CkNumPes() << std::endl;
   std::cout << "cellArrayDim = "; cellArrayDim.print();
   std::cout << "gravity = "; gravity.print();
@@ -293,8 +313,9 @@ void Main::writeSimParams(int flag)
   ssSimParams << "\"particleMass\": " << particleMass << "," << std::endl;
   ssSimParams << "\"cutOffDist\": " << cutOffDist << "," << std::endl;
   ssSimParams << "\"numPes\": " << CkNumPes() << "," << std::endl;
-  ssSimParams << "\"numFluidMarkers\": " << numFluidMarkers << "," << std::endl;
-  ssSimParams << "\"numBoundaryMarkers\": " << numBoundaryMarkers << "," << std::endl;
+  //ssSimParams << "\"numFluidMarkers\": " << numFluidMarkers << "," << std::endl;
+  //ssSimParams << "\"numBoundaryMarkers\": " << numBoundaryMarkers << "," << std::endl;
+  ssSimParams << "\"MaxNumSPHMarkers\": " << numSPHMarkers << "," << std::endl;
   ssSimParams << "\"numCellChares\": " << numCells << "," << std::endl;
   ssSimParams << "\"numComputeChares\": " << numComputes << "," << std::endl;
   ssSimParams << "\"write\": " << writeAll << "," << std::endl;

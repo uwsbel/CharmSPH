@@ -53,6 +53,7 @@ private:
   int inbrs;
   double stepTime;
   double periodTime;
+  double startTime;
   int updateCount;
   // store kinetic energy - initial and final
   double energy[2];
@@ -77,7 +78,7 @@ public:
   void migrateParticles(int step);
   void sendPositions(int iteration);
   void writeCell(int stepCount);
-  void writeTimings(double periotTime, int stepCount);
+  void writeTimings(double periodTime, double currSimTime, int currStep);
   void startCheckpoint(int);
   void pup(PUP::er &p);
 };

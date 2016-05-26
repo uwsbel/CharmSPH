@@ -15,8 +15,9 @@ mainmodule charmsph {
   readonly double maxVel;
   readonly double particleMass;
   readonly double cutOffDist;
-  readonly int numFluidMarkers;
-  readonly int numBoundaryMarkers;
+  // readonly int numFluidMarkers;
+  // readonly int numBoundaryMarkers;
+  readonly int numSPHMarkers;
   readonly int writeAll;
   readonly int writePeriod;
   readonly int writeBoundary;
@@ -27,6 +28,7 @@ mainmodule charmsph {
   readonly vec3 domainDim;
   readonly vec3 fluidMin;
   readonly vec3 fluidMax;
+  readonly vec3 boundaryMax;
   readonly vec3 cellSize;
   readonly vec3 mDist;
 
@@ -57,8 +59,6 @@ mainmodule charmsph {
         gravity.print();
         cellArray.run();
         computeArray.run();
-        printParams();
-        writeSimParams(1);
         startBenchmarkTime = CkWallTimer();
       }     
 
@@ -102,20 +102,20 @@ mainmodule charmsph {
       if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) serial {
         stepTime = CkWallTimer();
         periodTime = CkWallTimer();
+        startTime = CkWallTimer();
       }
 
       serial { 
         createSection(); 
-        if(writeAll){
-          writeCell(0);
-        }
+        // Always write first step.
+        writeCell(0);
       }
 
       for(stepCount = 1; stepCount <= finalStepCount; stepCount++) {
         // write data every n number of steps, where n = writePeriod.
         if ((stepCount % writePeriod) == 0) serial {
           if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0) {
-            writeTimings((CkWallTimer() - periodTime)*1000, stepCount);
+            writeTimings((CkWallTimer() - periodTime)*1000, (CkWallTimer() - startTime)*1000, stepCount);
             periodTime = CkWallTimer();
           }
           

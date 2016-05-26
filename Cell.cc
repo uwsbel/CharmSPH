@@ -15,16 +15,14 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
   usesAtSync = true;
 
   double halfH = h / 2;
-  double hSquared = h * h;
-  double boundaryThickness = 3 * h;
-  vec3 boundaryMin = domainMin + boundaryThickness;
-  vec3 boundaryMax = domainMax - boundaryThickness;
+
 
   int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
   //std::cout << "Chare ID: " << myid << std::endl;
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
+  
   for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) 
   {
     for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) 
@@ -39,25 +37,21 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
-        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-           (p.pos.y < boundaryMin.y)) //|| p.pos.y > boundaryMax.y))
-           //(p.pos.y < boundaryMin.y))
+        if((p.pos.z <= fluidMin.z || p.pos.z > boundaryMax.z) || 
+           (p.pos.x <= fluidMin.x || p.pos.x > boundaryMax.x) ||
+           (p.pos.y <= fluidMin.y || p.pos.y > boundaryMax.y))
         {
           p.typeOfParticle = 0; // Boundary Marker
-          numBoundaryMarkers++;
+          // numBoundaryMarkers++;
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > (boundaryMin.z + 0.5 * h) && p.pos.z < (boundaryMax.z - 0.5 * h)) && 
-                (p.pos.x > (boundaryMin.x + 0.5 * h) && p.pos.x < (boundaryMax.x / 2)) &&
-                (p.pos.y > (boundaryMin.y + 0.5 * h) && p.pos.y < (boundaryMax.y / 2)))
-        // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * h))) && 
-        //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * h))) &&
-        //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * h))))
+        else if((p.pos.z > fluidMin.z) && (p.pos.z < fluidMax.z) && 
+                (p.pos.x > fluidMin.x) && (p.pos.x < fluidMax.x) &&
+                (p.pos.y > fluidMin.y) && (p.pos.y < fluidMax.y))
         {
           p.typeOfParticle = -1; // Fluid Marker
-          numFluidMarkers++;
+          // numFluidMarkers++;
           particles.push_back(p);  
         }
       }
@@ -131,7 +125,7 @@ void Cell::createComputes() {
       CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
       computeArray[index].insert((++currPe) % CkNumPes());
       computesList[num] = index;
-      numComputes++;
+      //numComputes++;
     } 
     else 
     {
@@ -369,6 +363,11 @@ void Cell::writeCell(int stepCount)
     ssBoundaryParticles << "velMagnitude,density,pressure";
     ssBoundaryParticles << std::endl;
 
+    int writeBoundaryTmp = 1; 
+    if(stepCount > 0){
+      writeBoundaryTmp = writeBoundary;
+    }
+
     for(int i = 0;i < particles.size();i++) {
       Particle p = particles[i];
       if(p.typeOfParticle==-1) {
@@ -383,10 +382,10 @@ void Cell::writeCell(int stepCount)
         ssFluidParticles << p.acc.z << ',';
         ssFluidParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssFluidParticles << p.rho << ',';
-        ssFluidParticles << p.pressure << ',';
+        ssFluidParticles << p.pressure;
         ssFluidParticles << std::endl;
       }
-      else if((writeBoundary==1) && p.typeOfParticle==0) {
+      else if((writeBoundaryTmp == 1) && p.typeOfParticle==0) {
         ssBoundaryParticles << p.pos.x << ',';
         ssBoundaryParticles << p.pos.y << ',';
         ssBoundaryParticles << p.pos.z << ',';
@@ -398,7 +397,7 @@ void Cell::writeCell(int stepCount)
         ssBoundaryParticles << p.acc.z << ',';
         ssBoundaryParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssBoundaryParticles << p.rho << ',';
-        ssBoundaryParticles << p.pressure << ',';
+        ssBoundaryParticles << p.pressure;
         ssBoundaryParticles << std::endl;
       }
     }
@@ -412,7 +411,7 @@ void Cell::writeCell(int stepCount)
     fileNameFluid << ssFluidParticles.str();
     fileNameFluid.close();
 
-    if(writeBoundary == 1){
+    if(writeBoundaryTmp == 1){
       fileNameBoundary.open(ssFileNameBoundary.str().c_str());
       fileNameBoundary << ssBoundaryParticles.str();
       fileNameBoundary.close();
@@ -420,7 +419,7 @@ void Cell::writeCell(int stepCount)
 
 }
 
-void Cell::writeTimings(double periodTime, int currStep)
+void Cell::writeTimings(double periodTime, double currSimTime, int currStep)
 {
   double avgTimePerStep = periodTime / writePeriod;
   std::ofstream timingFile;
@@ -431,7 +430,8 @@ void Cell::writeTimings(double periodTime, int currStep)
 
   ssTimingResults << "{" << std::endl;
   ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep  << "," << std::endl;
-  ssTimingResults << "\"TotalSimTime\": " << periodTime << std::endl;
+  ssTimingResults << "\"TotalPeriodTime\": " << periodTime << "," << std::endl;
+  ssTimingResults << "\"CurrSimTime\": " << currSimTime << std::endl;
   ssTimingResults << "}" << std::endl;
 
   timingFile.open(ssFilename.str().c_str());

@@ -7,7 +7,7 @@ print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)
 
 if(len(sys.argv) == 1):
-    SimID = '0.05_4_1_0.0005_1001_1-1-1'
+    SimID = '0.05_4_1_0.0005_1-1-1'
 elif(len(sys.argv) == 2):
     SimID = sys.argv[1]
 # else:
@@ -20,12 +20,14 @@ FluidDir = cwd + SimDir + 'fluid/'
 BoundaryDir = cwd + SimDir + 'boundary/'
 
 print 'FluidDir = ', str(FluidDir)
+print 'BoundaryDir = ', str(BoundaryDir)
 
 os.chdir(FluidDir)
 currStep = -1
 totalNumFiles = 0
 fileNameList = []
 allFiles = os.listdir(FluidDir)
+allFiles = sorted(allFiles, key=lambda x: int(x.split('.')[1]))
 
 for fileName in allFiles:
     nameParts = fileName.split('.')
@@ -35,6 +37,7 @@ for fileName in allFiles:
         currFileName = "fluid." + str(step)
         totalNumFiles += 1
         fileNameList.append(currFileName)
+
 print fileNameList
 firstFile = True
 for fileName in fileNameList:
@@ -60,6 +63,9 @@ currStep = -1
 totalNumFiles = 0
 fileNameList = []
 allFiles = os.listdir(BoundaryDir)
+
+allFiles = sorted(allFiles, key=lambda x: int(x.split('.')[1]))
+
 
 for fileName in allFiles:
     nameParts = fileName.split('.')

@@ -41,7 +41,7 @@
 
 #define DEFAULT_H               (0.05)
 #define DEFAULT_DT              (1e-4)
-#define DEFAULT_MAXVEL          (0.8)
+#define DEFAULT_MAXVEL          (1)
 #define DEFAULT_MIN_X 0
 #define DEFAULT_MIN_Y 0
 #define DEFAULT_MIN_Z 0
@@ -53,7 +53,10 @@
 #define DEFAULT_FLUIDMIN_Z 3 * DEFAULT_H
 #define DEFAULT_FLUIDMAX_X DEFAULT_MAX_X / 2
 #define DEFAULT_FLUIDMAX_Y DEFAULT_MAX_Y / 2
-#define DEFAULT_FLUIDMAX_Z DEFAULT_MAX_Z / 2
+#define DEFAULT_FLUIDMAX_Z (DEFAULT_MAX_Z - (3 * DEFAULT_H))
+#define DEFAULT_BOUNDARYMAX_X DEFAULT_MAX_X - 3 * DEFAULT_H
+#define DEFAULT_BOUNDARYMAX_Y DEFAULT_MAX_Y - 3 * DEFAULT_H
+#define DEFAULT_BOUNDARYMAX_Z DEFAULT_MAX_Z - 3 * DEFAULT_H
 #define DEFAULT_WRITE 1 
 #define DEFAULT_WRITEPERIOD 100
 #define DEFAULT_WRITEBOUNDARY 0 
@@ -61,8 +64,8 @@
 #define DEFAULT_MARKDISTMULT 1.0   
 
 #define RHO0                    (1000)
-#define MU                      (0.001)
-#define GRAVITY                 (-1)
+#define MU                      (0.000)
+#define GRAVITY                 (-5)
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
@@ -237,8 +240,8 @@ extern /* readonly */ double particleMass;
 extern /* readonly */ double cutOffDist;
 extern /* readonly */ int markDistMult;
 extern /* readonly */ int cellSizeMult;
-extern /* readonly */ int numFluidMarkers;
-extern /* readonly */ int numBoundaryMarkers;
+//extern /* readonly */ int numFluidMarkers;
+//extern /* readonly */ int numBoundaryMarkers;
 extern /* readonly */ int writeAll;
 extern /* readonly */ int writePeriod;
 extern /* readonly */ int writeBoundary;
@@ -249,6 +252,7 @@ extern /* readonly */ vec3 domainMax;
 extern /* readonly */ vec3 domainDim;
 extern /* readonly */ vec3 fluidMin;
 extern /* readonly */ vec3 fluidMax;
+extern /* readonly */ vec3 boundaryMax;
 extern /* readonly */ vec3 cellSize;
 extern /* readonly */ vec3 mDist;
 

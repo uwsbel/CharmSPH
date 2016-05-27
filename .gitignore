@@ -4,6 +4,7 @@ leanmd.decl.h
 leanmd.def.h
 charmrun
 remote-sync.sh
+charm-run*
 
 eightParticleTest_1e-2_g1
 oneTwoFiveParticleTest_1e-2_g1

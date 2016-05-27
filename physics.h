@@ -33,14 +33,14 @@ inline vec3 Distance(vec3 a, vec3 b) {
 //3D SPH kernel function, W3_SplineA
 inline double W3_Spline(double d) 
 { // d is positive. h is the sph particle radius (i.e. h in the document) d is the distance of 2 particles
-  double q = fabs(d) / H;
+  double q = fabs(d) / h;
   if (q < 1) 
   {
-    return (0.25f / (PI * H * H * H) * (pow(2 - q, 3) - 4 * pow(1 - q, 3)));
+    return (0.25f / (PI * h * h * h) * (pow(2 - q, 3) - 4 * pow(1 - q, 3)));
   }
   if (q < 2) 
   {
-    return (0.25f / (PI * H * H * H) * pow(2 - q, 3));
+    return (0.25f / (PI * h * h * h) * pow(2 - q, 3));
   }
   return 0;
 }
@@ -48,15 +48,15 @@ inline double W3_Spline(double d)
 // d: magnitude of the distance of the two particles
 // dW * dist3 gives the gradiant of W3_Quadratic, where dist3 is the distance vector of the two particles, (dist3)a = pos_a - pos_b
 inline vec3 GradW_Spline(vec3 d) { // d is positive. r is the sph particle radius (i.e. h in the document) d is the distance of 2 particles
-  double q = sqrt(dot(d, d)) / H;
+  double q = sqrt(dot(d, d)) / h;
   if (q < 1) 
   {
-    double constant1 = 0.75 * (INVPI) * pow(H, -5) * ((3 * q) - 4);
+    double constant1 = 0.75 * (INVPI) * pow(h, -5) * ((3 * q) - 4);
     return d * constant1;
   }
   if (q < 2) 
   {
-    double constant1 = 0.75 * (INVPI) * pow(H, -5) * (-q + 4.0 - (4.0 / q));
+    double constant1 = 0.75 * (INVPI) * pow(h, -5) * (-q + 4.0 - (4.0 / q));
     return d * constant1;
   }
   return vec3(0, 0, 0);
@@ -69,9 +69,9 @@ inline float calcLJForce(const float r)
   float dcoeff =  abs(GRAVITY);// * (domainMax.y);
   int p1coeff = 12;
   int p2coeff = 6;
-  if (r <= H)
+  if (r <= h)
   {
-    force = dcoeff * (pow(H/r, p1coeff) - pow(H/r, p2coeff));   
+    force = dcoeff * (pow(h/r, p1coeff) - pow(h/r, p2coeff));   
   }
 
    return force;
@@ -81,14 +81,14 @@ inline double calcDRho(double rho_i, vec3 vel_i,
                        double rho_j, vec3 vel_j, 
                        vec3 gradW)
 {
-  return (rho_i / rho_j) * PARTICLE_MASS * dot(vel_i - vel_j, gradW);
+  return (rho_i / rho_j) * particleMass * dot(vel_i - vel_j, gradW);
 }
 
 inline vec3 calcDVel(double rho_i, vec3 vel_i, double p_i, 
                      double rho_j, vec3 vel_j, double p_j, 
                      vec3 gradW, double r_ij_dot_gradW_overDist, double multViscosity)
 {
-  return gradW * -1 * PARTICLE_MASS * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * PARTICLE_MASS * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
+  return gradW * -1 * particleMass * (p_i / (rho_i * rho_i) + p_j / (rho_j * rho_j)) +  (vel_i - vel_j) * particleMass * (8 * multViscosity) * MU * pow(rho_i + rho_j, -2) * r_ij_dot_gradW_overDist;
 }
 
 inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::vector<vec4>& dVel_dRho)
@@ -130,7 +130,7 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         r_ij = Distance(pos_i, pos_j);
         absDist = magnitude(r_ij);
 
-        if (absDist > PTP_CUT_OFF)
+        if (absDist > cutOffDist)
         {
           continue;
         }
@@ -141,7 +141,7 @@ inline void calcInternalForcesSPH(ParticleDataMsg* first, int stepCount, std::ve
         double multViscosity = 1.0;
         gradW = GradW_Spline(r_ij);
         double r_ij_dot_gradW = dot(r_ij, gradW);
-        double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+        double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * h * h);
 
         dVel_i = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
         dRho_i = calcDRho(rho_i, vel_i, rho_j, vel_j, gradW);
@@ -196,7 +196,7 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
 
 
           
-          if (absDist > PTP_CUT_OFF)
+          if (absDist > cutOffDist)
           {
             continue;
           }
@@ -206,7 +206,7 @@ inline void calcPairForcesSPH(ParticleDataMsg* first, ParticleDataMsg* second, i
           double multViscosity = 1.0;
           gradW = GradW_Spline(r_ij);
           double r_ij_dot_gradW = dot(r_ij, gradW);
-          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * H * H);
+          double r_ij_dot_gradW_overDist = r_ij_dot_gradW / (absDist * absDist + EPSILON * h * h);
 
           dVel_ij = calcDVel(rho_i, vel_i, p_i, rho_j, vel_j, p_j, gradW, r_ij_dot_gradW_overDist,multViscosity);
 

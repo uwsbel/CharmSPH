@@ -1,7 +1,9 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <string>
 #include "defs.h"
+
 
 //central controller chare
 class Main : public CBase_Main {
@@ -12,7 +14,13 @@ class Main : public CBase_Main {
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
-    void initOutDirs();
+    std::string getSimulationID();
+    void compileOutput();
+    void writeSimParams(int flag);
+    void setDimensions();
+    void setDefaultParams();
+    void printParams();
+    void initOutDirs(std::string simID);
     void pup(PUP::er &p);
 };
 #endif

@@ -9,7 +9,7 @@
 inline double Eos(double rho) 
 {
   int gama = 7;
-  double B = 100 * RHO0 * MAXVEL * MAXVEL / gama; 
+  double B = 100 * RHO0 * maxVel * maxVel / gama; 
   return B * (pow(rho / RHO0, gama) - 1) + BASEPRES;
 }
 
@@ -52,6 +52,8 @@ private:
   // number of interacting neighbors
   int inbrs;
   double stepTime;
+  double periodTime;
+  double startTime;
   int updateCount;
   // store kinetic energy - initial and final
   double energy[2];
@@ -76,6 +78,7 @@ public:
   void migrateParticles(int step);
   void sendPositions(int iteration);
   void writeCell(int stepCount);
+  void writeTimings(double periodTime, double currSimTime, int currStep);
   void startCheckpoint(int);
   void pup(PUP::er &p);
 };

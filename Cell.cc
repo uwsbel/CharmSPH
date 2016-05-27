@@ -1,28 +1,28 @@
+/* C++ includes */
 #include <sstream>
 #include <fstream>
 #include <iostream>
-
+/* Charm++ includes */
+#include "ckmulticast.h"
+#include "ckio.h"
+/* CharmSPH includes */
 #include "defs.h"
 #include "charmsph.decl.h"
 #include "Cell.h"
-#include "ckmulticast.h"
-#include "ckio.h"
 
 Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(NUM_NEIGHBORS) {
   //load balancing to be called when AtSync is called
   usesAtSync = true;
 
-  double halfH = H / 2;
-  double HSquared = H * H;
-  double boundaryThickness = 3 * H;
-  vec3 boundaryMin = domainMin + boundaryThickness;
-  vec3 boundaryMax = domainMax - boundaryThickness;
+  double halfH = h / 2;
+
 
   int myid = thisIndex.z + cellArrayDim.z * (thisIndex.y + cellArrayDim.y * thisIndex.x); 
   //std::cout << "Chare ID: " << myid << std::endl;
   myNumParts = 1;
 
   vec3 cellMin(thisIndex.x * cellSize.x, thisIndex.y * cellSize.y, thisIndex.z * cellSize.z);
+  
   for (double px = 0.5 * mDist.x; px < cellSize.x; px += mDist.x) 
   {
     for (double py = 0.5 * mDist.y; py < cellSize.y; py += mDist.y) 
@@ -33,27 +33,25 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
         p.pos = vec3(px, py, pz) + cellMin;
         p.vel = vec3(0,0,0);
         p.acc = vec3(0,0,0);
-        p.mass = PARTICLE_MASS;
+        p.mass = particleMass;
         p.rho = RHO0;
         p.pressure = Eos(p.rho);
         /* Set as lower or top boundary particle (above and below z plane)*/
-        if((p.pos.z < boundaryMin.z || p.pos.z > boundaryMax.z) || 
-           (p.pos.x < boundaryMin.x || p.pos.x > boundaryMax.x) ||
-           (p.pos.y < boundaryMin.y)) //|| p.pos.y > boundaryMax.y))
-           //(p.pos.y < boundaryMin.y))
+        if((p.pos.z <= fluidMin.z || p.pos.z > boundaryMax.z) || 
+           (p.pos.x <= fluidMin.x || p.pos.x > boundaryMax.x) ||
+           (p.pos.y <= fluidMin.y || p.pos.y > boundaryMax.y))
         {
           p.typeOfParticle = 0; // Boundary Marker
+          // numBoundaryMarkers++;
           //p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
-        else if((p.pos.z > (fluidMin.z + 0.7 * H) && p.pos.z < (domainMax.z)) && 
-                (p.pos.x > (fluidMin.x + 0.7 * H) && p.pos.x < (domainMax.x / 2)) &&
-                (p.pos.y > (fluidMin.y + 0.7 * H) && p.pos.y < (domainMax.y / 2)))
-        // else if(((p.pos.z > fluidMin.z) && (p.pos.z < (fluidMin.z + 10 * H))) && 
-        //    ((p.pos.x > fluidMin.x) && (p.pos.x < (fluidMin.x + 10 * H))) &&
-        //    ((p.pos.y > fluidMin.y) && (p.pos.y < (fluidMin.y + 10 * H))))
+        else if((p.pos.z > fluidMin.z) && (p.pos.z < fluidMax.z) && 
+                (p.pos.x > fluidMin.x) && (p.pos.x < fluidMax.x) &&
+                (p.pos.y > fluidMin.y) && (p.pos.y < fluidMax.y))
         {
           p.typeOfParticle = -1; // Fluid Marker
+          // numFluidMarkers++;
           particles.push_back(p);  
         }
       }
@@ -82,10 +80,10 @@ void Cell::createComputes() {
 
   /*  The computes X are inserted by a given cell:
    *
-   *	^  X  X  X
-   *	|  0  X  X
-   *	y  0  0  0
-   *	   x ---->
+   *  ^  X  X  X
+   *  |  0  X  X
+   *  y  0  0  0
+   *     x ---->
    */
 
   // for round robin insertion
@@ -127,6 +125,7 @@ void Cell::createComputes() {
       CkArrayIndex6D index(px1, py1, pz1, px2, py2, pz2);
       computeArray[index].insert((++currPe) % CkNumPes());
       computesList[num] = index;
+      //numComputes++;
     } 
     else 
     {
@@ -246,6 +245,19 @@ void Cell::migrateToCell(Particle p, int &px, int &py, int &pz)
 }
 
 
+inline double velocityCheck(double inVelocity) 
+{
+  if(fabs(inVelocity) > maxVel) 
+  {
+    if(inVelocity < 0.0 ) return -maxVel;
+    else return maxVel;
+  } 
+  else 
+  {
+    return inVelocity;
+  }
+}
+
 
 // Function to update properties (i.e. acceleration, velocity and position) in particles
 // add double dt arg, use particles 1 or 2
@@ -261,10 +273,10 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles2[i].acc = dVel_dRho[i].r + gravity;
-        particles2[i].pos += particles2[i].vel * 0.5 * DT;
-        particles2[i].vel += particles2[i].acc * 0.5 * DT; 
+        particles2[i].pos += particles2[i].vel * 0.5 * dt;
+        particles2[i].vel += particles2[i].acc * 0.5 * dt; 
       }
-      particles2[i].rho += dVel_dRho[i].l * 0.5 * DT;
+      particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
       particles2[i].pressure = Eos(particles2[i].rho);
     }   
   }
@@ -276,35 +288,19 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles[i].acc = dVel_dRho[i].r + gravity;
-        particles[i].pos += particles[i].vel * DT;
-        particles[i].vel += particles[i].acc * DT; 
+        particles[i].pos += particles[i].vel * dt;
+        particles[i].vel += particles[i].acc * dt; 
+
+        particles[i].vel.x = velocityCheck(particles[i].vel.x);
+        particles[i].vel.y = velocityCheck(particles[i].vel.y);
+        particles[i].vel.z = velocityCheck(particles[i].vel.z);
+
       }
-       particles[i].rho += dVel_dRho[i].l * DT; // With constant presure the density shouldnt beupdated
+       particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
        particles[i].pressure = Eos(particles[i].rho);
 
     } 
   }
-
-}
-
-inline double velocityCheck(double inVelocity) 
-{
-  if(fabs(inVelocity) > MAX_VELOCITY) 
-  {
-    if(inVelocity < 0.0 ) return -MAX_VELOCITY;
-    else return MAX_VELOCITY;
-  } 
-  else 
-  {
-    return inVelocity;
-  }
-}
-
-void Cell::limitVelocity(Particle &p) 
-{
-  p.vel.x = velocityCheck(p.vel.x);
-  p.vel.y = velocityCheck(p.vel.y);
-  p.vel.z = velocityCheck(p.vel.z);
 }
 
 Particle& Cell::wrapAround(Particle &p) 
@@ -364,14 +360,17 @@ void Cell::writeCell(int stepCount)
     ssBoundaryParticles << "x,y,z,";
     ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";
     ssBoundaryParticles << "xAcc,yAcc,zAcc,";
-    ssBoundaryParticles << "velMagnitude,density,pressure,mass";
+    ssBoundaryParticles << "velMagnitude,density,pressure";
     ssBoundaryParticles << std::endl;
 
-    for(int i = 0;i < particles.size();i++)
-    {
+    int writeBoundaryTmp = 1; 
+    if(stepCount > 0){
+      writeBoundaryTmp = writeBoundary;
+    }
+
+    for(int i = 0;i < particles.size();i++) {
       Particle p = particles[i];
-      if(p.typeOfParticle==-1)
-      {
+      if(p.typeOfParticle==-1) {
         ssFluidParticles << p.pos.x << ',';
         ssFluidParticles << p.pos.y << ',';
         ssFluidParticles << p.pos.z << ',';
@@ -383,11 +382,10 @@ void Cell::writeCell(int stepCount)
         ssFluidParticles << p.acc.z << ',';
         ssFluidParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssFluidParticles << p.rho << ',';
-        ssFluidParticles << p.pressure << ',';
+        ssFluidParticles << p.pressure;
         ssFluidParticles << std::endl;
       }
-      else if(p.typeOfParticle==0)
-      {
+      else if((writeBoundaryTmp == 1) && p.typeOfParticle==0) {
         ssBoundaryParticles << p.pos.x << ',';
         ssBoundaryParticles << p.pos.y << ',';
         ssBoundaryParticles << p.pos.z << ',';
@@ -399,23 +397,45 @@ void Cell::writeCell(int stepCount)
         ssBoundaryParticles << p.acc.z << ',';
         ssBoundaryParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssBoundaryParticles << p.rho << ',';
-        ssBoundaryParticles << p.pressure << ',';
+        ssBoundaryParticles << p.pressure;
         ssBoundaryParticles << std::endl;
       }
     }
 
     std::ofstream fileNameFluid, fileNameBoundary;
     std::stringstream ssFileNameFluid, ssFileNameBoundary;
-    ssFileNameFluid << "output/fluid/fluid." << stepCount << ".chare." << id;
-    ssFileNameBoundary << "output/boundary/boundary." << stepCount << ".chare." << id;
+    ssFileNameFluid << "output/" << simID << "/fluid/fluid." << stepCount << ".chare." << id;
+    ssFileNameBoundary << "output/" << simID << "/boundary/boundary." << stepCount << ".chare." << id;
 
     fileNameFluid.open(ssFileNameFluid.str().c_str());
     fileNameFluid << ssFluidParticles.str();
     fileNameFluid.close();
-    fileNameBoundary.open(ssFileNameBoundary.str().c_str());
-    fileNameBoundary << ssBoundaryParticles.str();
-    fileNameBoundary.close();
+
+    if(writeBoundaryTmp == 1){
+      fileNameBoundary.open(ssFileNameBoundary.str().c_str());
+      fileNameBoundary << ssBoundaryParticles.str();
+      fileNameBoundary.close();
+    }
+
 }
 
+void Cell::writeTimings(double periodTime, double currSimTime, int currStep)
+{
+  double avgTimePerStep = periodTime / writePeriod;
+  std::ofstream timingFile;
+  std::stringstream ssFilename;
+  std::stringstream ssTimingResults;
 
+  ssFilename << "output/" << simID << "/Timing_" << currStep << ".json";
+
+  ssTimingResults << "{" << std::endl;
+  ssTimingResults << "\"AvgTimePerStep\": " << avgTimePerStep  << "," << std::endl;
+  ssTimingResults << "\"TotalPeriodTime\": " << periodTime << "," << std::endl;
+  ssTimingResults << "\"CurrSimTime\": " << currSimTime << std::endl;
+  ssTimingResults << "}" << std::endl;
+
+  timingFile.open(ssFilename.str().c_str());
+  timingFile << ssTimingResults.str();
+  timingFile.close();
+}
 

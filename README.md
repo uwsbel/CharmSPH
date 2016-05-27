@@ -19,6 +19,15 @@ Charm++ implementation of Smoothed Particle Hydrodynamics for distributed memory
 
 ### In Euler
 
+```
+	module load openmpi
+```
+
+```
+	cd charm
+ ./build charm++ mpi-linux-x86_64   mpicxx smp  -j16  --with-production --enable-tracing	
+```
+
 <a name="bwsetup">
 ### In Blue Waters
 </a>

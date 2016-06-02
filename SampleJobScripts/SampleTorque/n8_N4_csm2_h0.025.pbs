@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd 
+##. /opt/modules/default/init/bash # NEEDED to add module commands to shell
 
 maxPPN=32
 numNodes=4 # Number of physical nodes
@@ -18,30 +18,34 @@ Z=1.6
 H=0.025
 W=0
 SimID="n"$n"_N"$N"_csm"$csm"_h"$H
-OutputDir="output/"$SimID
-WP=20
-T=100
-
-mkdir "output"
-mkdir $OutputDir
-
-printf "{\
-		\"numCharmNodes\":  %d,\n\
-	    \"numCharmNodesPerNode\": %d,\n\
-	    \"numPEPerCharmNode\": %d,\n \
-	    \"numCommThreads\":  %d,\n\
-	    \"numNodes\":  %d,\n\
-	    \"maxPPN\": %d\n\
-	    }\n"\
-	    $n $N $d $commThreads $numNodes $maxPPN > "output/"$SimID"/EnvParams.json"
+OutputDir="output/"$SimID"/"
 
 
 #PBS -l nodes=$numNodes:ppn=$maxPPN:xe
 #PBS -l walltime=00:01:00
 #PBS -N $SimID
 
+cd $PBS_O_WORKDIR
+
+
+mkdir "output"
+mkdir $OutputDir
+
+
 #PBS -e $OutputDir$PBS_JOBID.err
 #PBS -o $OutputDir$PBS_JOBID.out
+
+printf "{\
+		\"numCharmNodes\":  %d,\n\
+	    \"numCharmNodesPerNode\": %d,\n\
+	    \"numPEPerCharmNode\": %d,\n \
+	    \"numCommThreads\":  %d,\n\
+	    \"ppnPerCharmNode\":  %d,\n\
+	    \"numNodes\":  %d,\n\
+	    \"maxPPN\": %d\n\
+	    }\n"\
+	    $n $N $d $commThreads $ppn $numNodes $maxPPN > "output/"$SimID"/EnvParams.json"
+
 
 aprun -n $n -N $N -d $d ./charmsph +ppn $ppn +commap 0 +pemap 1-31 -x $X -y $Y -z $Z -h $H -w $W -id $SimID -wp $WP -t $T
 

@@ -35,10 +35,11 @@ printf "{\
 	    \"numCharmNodesPerNode\": %d,\n\
 	    \"numPEPerCharmNode\": %d,\n \
 	    \"numCommThreads\":  %d,\n\
+	    \"ppnPerCharmNode\":  %d,\n\
 	    \"numNodes\":  %d,\n\
 	    \"maxPPN\": %d\n\
 	    }\n"\
-	    $n $N $d $commThreads $numNodes $maxPPN > "output/"$SimID"/EnvParams.json"
+	    $n $N $d $commThreads $ppn $numNodes $maxPPN > "output/"$SimID"/EnvParams.json"
 
 
 #PBS -l nodes=1:ppn=32:xe

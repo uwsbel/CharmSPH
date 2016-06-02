@@ -71,7 +71,6 @@ mainmodule charmsph {
           CkPrintf("\nEnergy conservation test passed for maximum allowed variation of %E units.\nSIMULATION SUCCESSFULL \n",ENERGY_VAR);
         }
         CkPrintf("Total application time %f s\n", (CkWallTimer() - startBenchmarkTime));
-        writeSimParams(2);
         //if(writeAll){
         //  compileOutput();
         //}

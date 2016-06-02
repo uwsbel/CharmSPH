@@ -123,13 +123,16 @@ Main::Main(CkArgMsg* m)
         else if (strcmp(m->argv[i], "-lbp") == 0) {
           ldbPeriod = atof(m->argv[i + 1]);
         }
+        else if (strcmp(m->argv[i], "-id") == 0) {
+          simID = m->argv[i + 1];
+        }
     }
   }
   particleMass = h * h * h * RHO0;
   cutOffDist = 2 * h;
   setDimensions();
   gravity = vec3(0, GRAVITY, 0);
-  simID = getSimulationID();
+  // simID = getSimulationID();
   initOutDirs(simID); // Initialize the fluid and boundary dirs where outputs goes
 
   numCells = cellArrayDim.x * cellArrayDim.y * cellArrayDim.z;
@@ -140,9 +143,8 @@ Main::Main(CkArgMsg* m)
   numSPHMarkers = numCells * numSPHMarkersPerCellDim.x * numSPHMarkersPerCellDim.y * numSPHMarkersPerCellDim.z; 
   numComputes = (NUM_NEIGHBORS/2 + 1) * numCells;
 
-
   printParams();
-  writeSimParams(1);
+  writeSimParams();
 
   int numPes = CkNumPes();
   int currPe = -1, pe;
@@ -173,6 +175,8 @@ Main::Main(CkMigrateMessage* msg): CBase_Main(msg) {}
 
 void Main::setDefaultParams()
 {
+  /* Default simID*/
+  simID = "charmsph_output"; 
   /* Charm++ Default params */  
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
@@ -293,16 +297,13 @@ void Main::compileOutput()
   system(cmd.c_str());
 }
 
-void Main::writeSimParams(int flag)
+void Main::writeSimParams()
 {
   std::ofstream simParamsFile;
   std::string filename;
-  if(flag == 1){
-    filename = "output/" + simID + "/SimParams1.json";
-  }
-  else{
-    filename = "output/" + simID + "/SimParams2.json";
-  }
+  filename = "output/" + simID + "/SimParams.json";
+
+
   std::stringstream ssSimParams;
 
   ssSimParams << "{" << std::endl;

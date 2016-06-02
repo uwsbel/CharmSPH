@@ -1,23 +1,25 @@
+import json
 import os
 import fnmatch
 import sys
 
+def line_count(file_name):
+    lines =int(os.popen("wc -l " + file_name).read().strip().split()[0])
+    return lines
 
 print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)
 
 if(len(sys.argv) == 1):
-    SimID = '0.05_4_1_0.0005_1-1-1'
+    SimID = 'charmsph_output'
 elif(len(sys.argv) == 2):
     SimID = sys.argv[1]
 # else:
 #     raise InputError()
-SimDir = '/output/' + SimID + '/'
-BoundaryDir = SimDir + 'boundary/'
 
-cwd = os.getcwd()
-FluidDir = cwd + SimDir + 'fluid/'
-BoundaryDir = cwd + SimDir + 'boundary/'
+SimDir = os.getcwd() + '/output/' + SimID + '/' 
+FluidDir = SimDir + 'fluid/'
+BoundaryDir = SimDir + 'boundary/'
 
 print 'FluidDir = ', str(FluidDir)
 print 'BoundaryDir = ', str(BoundaryDir)
@@ -92,6 +94,24 @@ for fileName in fileNameList:
     for f in currFiles:
         os.remove(BoundaryDir + f)
     firstFile = True
+
+
+# Number of boundary markers
+numBoundaryMarkers = line_count(BoundaryDir + 'boundary.0.csv')
+numBoundary = {'numBoundaryMarkers': numBoundaryMarkers}
+
+## Number of fluid markers
+numFluidMarkers = line_count(FluidDir + 'fluid.0.csv') 
+numFluid = {'numFluidMarkers':numFluidMarkers}
+
+## Put data in json file
+with open(SimDir + 'SimParams.json','r') as f:
+    data = json.load(f)
+
+with open(SimDir + 'SimParams.json','w+') as f:
+    data['numFluidMarkers'] = numFluidMarkers
+    data['numBoundaryMarkers'] = numBoundaryMarkers
+    json.dump(data, f, indent=4)
 
 
 

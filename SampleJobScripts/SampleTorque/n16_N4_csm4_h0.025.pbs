@@ -22,6 +22,8 @@ Y=1.6
 Z=1.6
 H=0.025
 W=0
+WP=20
+T=101
 SimID="n"$n"_N"$N"_csm"$csm"_h"$H
 OutputDir="output/"$SimID"/"
 

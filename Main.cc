@@ -347,12 +347,12 @@ void Main::initOutDirs(std::string simID)
   const std::string boundaryDir(simDir + "/boundary");
   const std::string mkOutputDir = std::string("mkdir ") + outDir + simDir + fluidDir + boundaryDir;
   system(mkOutputDir.c_str());
-  const std::string rmOutCmd = std::string("rm ") + outDir + std::string("/*");
-  const std::string rmSimCmd = std::string("rm ") + simDir + std::string("/*");
+  const std::string rmSimParamsCmd = std::string("rm ") + simDir + std::string("/SimParams.json");
+  const std::string rmTimingCmd = std::string("rm ") + simDir + std::string("/Timing*");
   const std::string rmFluidCmd = std::string("rm ") + fluidDir + std::string("/*");
   const std::string rmBoundaryCmd = std::string("rm ") + boundaryDir + std::string("/*");
-  system(rmOutCmd.c_str());
-  system(rmSimCmd.c_str());
+  system(rmSimParamsCmd.c_str());
+  system(rmTimingCmd.c_str());
   system(rmFluidCmd.c_str());
   system(rmBoundaryCmd.c_str());
 }

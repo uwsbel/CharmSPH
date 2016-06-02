@@ -21,19 +21,19 @@ SimID="n"$n"_N"$N"_csm"$csm"_h"$H
 OutputDir="output/"$SimID"/"
 
 
-#PBS -l nodes=$numNodes:ppn=$maxPPN:xe
+#PBS -l nodes=${numNodes}:ppn=${maxPPN}:xe
 #PBS -l walltime=00:01:00
-#PBS -N $SimID
+#PBS -N ${SimID}
 
 cd $PBS_O_WORKDIR
-
+cd ../../
 
 mkdir "output"
 mkdir $OutputDir
 
 
-#PBS -e $OutputDir$PBS_JOBID.err
-#PBS -o $OutputDir$PBS_JOBID.out
+#PBS -e ${OutputDir}$PBS_JOBID.err
+#PBS -o ${OutputDir}$PBS_JOBID.out
 
 printf "{\
 		\"numCharmNodes\":  %d,\n\

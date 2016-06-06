@@ -17,10 +17,10 @@ commThreads=1 # Number of communication threads (usually 1)
 
 # SimParams
 csm=4
+H=0.025
 X=1.6
 Y=1.6
 Z=1.6
-H=0.025
 W=0
 WP=20
 T=101
@@ -47,6 +47,3 @@ printf "{\
 
 
 aprun -n $n -N $N -d $d ./charmsph +ppn $ppn +commap 0,16 +pemap 1-15:17-31 -x $X -y $Y -z $Z -h $H -w $W -id $SimID -wp $WP -t $T
-
-
-python compileOutput.py $SimID

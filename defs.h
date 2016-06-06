@@ -65,7 +65,7 @@
 
 #define RHO0                    (1000)
 #define MU                      (0.000)
-#define GRAVITY                 (-5)
+#define GRAVITY                 (-1)
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)

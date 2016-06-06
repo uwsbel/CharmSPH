@@ -5,6 +5,8 @@ leanmd.def.h
 charmrun
 remote-sync.sh
 charm-run*
+SampleJobScripts/BW_Runs
+SampleJobScripts/Euler_Runs
 
 eightParticleTest_1e-2_g1
 oneTwoFiveParticleTest_1e-2_g1

@@ -125,25 +125,25 @@ mainmodule charmsph {
 
         //send current cell positions to my computes 
         serial {
-          CkPrintf("Sending Positions...");
+          // CkPrintf("Sending Positions...");
           sendPositions(1);
         }
 
         //update properties of atoms using new force values 
         //when reduceForces(vec3 forces[n], int n) serial { updateProperties(forces); }
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
-          CkPrintf("3, reduceForces was called. First update properties\n"); 
+          // CkPrintf("3, reduceForces was called. First update properties\n"); 
           updatePropertiesSPH(dVel_dRho, 1); 
         }
 
         serial { 
-          CkPrintf("4. Second sendPositions\n"); 
+          // CkPrintf("4. Second sendPositions\n"); 
           sendPositions(2); 
         } 
 
         //update properties of atoms using new force values 
         when reduceForcesSPH(vec4 dVel_dRho[n], int n) serial { 
-          CkPrintf("6. reduceForces was called for the second time.\n"); 
+          // CkPrintf("6. reduceForces was called for the second time.\n"); 
           updatePropertiesSPH(dVel_dRho, 2); 
         }
 

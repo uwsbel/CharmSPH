@@ -1,3 +1,5 @@
+sftp*
+h0.*
 *.o
 output
 leanmd.decl.h
@@ -7,7 +9,7 @@ remote-sync.sh
 charm-run*
 SampleJobScripts/BW_Runs
 SampleJobScripts/Euler_Runs
-
+Euler_Runs*
 eightParticleTest_1e-2_g1
 oneTwoFiveParticleTest_1e-2_g1
 singleParticleTest_1e-2_g1

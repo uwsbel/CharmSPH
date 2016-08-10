@@ -346,19 +346,24 @@ void Cell::pup(PUP::er &p) {
 
 void Cell::writeCell(int stepCount)
 {
-    int id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+    int cell_id = thisIndex.x + thisIndex.y*cellArrayDim.x + thisIndex.z*cellArrayDim.x*cellArrayDim.y;
+    int pe_id = CkMyPe();
+    int node_id = CkMyNode();
+    int rank_id = CkMyRank();
     std::stringstream ssFluidParticles;
     std::stringstream ssBoundaryParticles;
 
     ssFluidParticles << "x,y,z,";
     ssFluidParticles << "xVelocity,yVelocity,zVelocity,";
     ssFluidParticles << "xAcc,yAcc,zAcc,";
-    ssFluidParticles << "velMagnitude,density,pressure,mass";
+    ssFluidParticles << "velMagnitude,density,pressure,";
+    ssFluidParticles << "currCell,currPE,currNode,currRank";
     ssFluidParticles << std::endl;
     ssBoundaryParticles << "x,y,z,";
     ssBoundaryParticles << "xVelocity,yVelocity,zVelocity,";
     ssBoundaryParticles << "xAcc,yAcc,zAcc,";
-    ssBoundaryParticles << "velMagnitude,density,pressure";
+    ssBoundaryParticles << "velMagnitude,density,pressure,";
+    ssBoundaryParticles << "currCell,currPE,currNode,currRank";
     ssBoundaryParticles << std::endl;
 
     int writeBoundaryTmp = 1; 
@@ -380,7 +385,11 @@ void Cell::writeCell(int stepCount)
         ssFluidParticles << p.acc.z << ',';
         ssFluidParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssFluidParticles << p.rho << ',';
-        ssFluidParticles << p.pressure;
+        ssFluidParticles << p.pressure << ',';
+        ssFluidParticles << cell_id << ',';
+        ssFluidParticles << pe_id << ',';
+        ssFluidParticles << node_id << ',';
+        ssFluidParticles << rank_id;
         ssFluidParticles << std::endl;
       }
       else if((writeBoundaryTmp == 1) && p.typeOfParticle==0) {
@@ -395,15 +404,19 @@ void Cell::writeCell(int stepCount)
         ssBoundaryParticles << p.acc.z << ',';
         ssBoundaryParticles << sqrt(dot(p.vel,p.vel)) << ',';
         ssBoundaryParticles << p.rho << ',';
-        ssBoundaryParticles << p.pressure;
+        ssBoundaryParticles << p.pressure << ',';
+        ssBoundaryParticles << cell_id << ',';
+        ssBoundaryParticles << pe_id << ',';
+        ssBoundaryParticles << node_id << ',';
+        ssBoundaryParticles << rank_id;
         ssBoundaryParticles << std::endl;
       }
     }
 
     std::ofstream fileNameFluid, fileNameBoundary;
     std::stringstream ssFileNameFluid, ssFileNameBoundary;
-    ssFileNameFluid << "output/" << simID << "/fluid/fluid." << stepCount << ".chare." << id;
-    ssFileNameBoundary << "output/" << simID << "/boundary/boundary." << stepCount << ".chare." << id;
+    ssFileNameFluid << "output/" << simID << "/fluid/fluid." << stepCount << ".chare." << cell_id;
+    ssFileNameBoundary << "output/" << simID << "/boundary/boundary." << stepCount << ".chare." << cell_id;
 
     fileNameFluid.open(ssFileNameFluid.str().c_str());
     fileNameFluid << ssFluidParticles.str();

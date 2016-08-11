@@ -64,12 +64,12 @@
 #define DEFAULT_MARKDISTMULT 1.0   
 
 #define RHO0                    (1000)
-#define MU                      (0.000)
+#define MU                      (1.000)
 #define GRAVITY                 (-1)
 #define PRESSURE_CONSTANT       (0.5)
 #define EPSILON                 (1e-2)
 #define BASEPRES                (0)
-#define BOUNDARY_PRESSURE       (1000) // Artificial Boundary Pressure
+#define BOUNDARY_PRESSURE       (250) // Artificial Boundary Pressure
 #define MULTVISCOSITY_FSI       (5.0)
 
 #define CELLARRAY_DIM_X         3

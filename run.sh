@@ -10,12 +10,13 @@ let p="$d * $n"
 
 csm=4
 H=0.05
-X=0.8
-Y=0.8
-Z=0.8
+X=1.2
+Y=1.2
+Z=0.6
+DT=0.00025
 W=1
 WB=1
-WP=250
+WP=100
 T=10000
 #SimID="p"$p"_n"$n"_N"$N"_csm"$csm"_h"$H
 OutputDir="output/"$SimID"/"
@@ -34,5 +35,5 @@ printf "{\
                    }\n"\
          $numTasks $N $cpusPerTask $numCommThreads $ppn $numNodes $cpusPerNode > "output/"$SimID"/EnvParams.json"
 
-./charmrun +p${p} ./charmsph -x ${X} -y ${Y} -z ${Z} -h ${H} -w ${W} -wb ${WB} -wp ${WP} -t ${T} -csm ${csm}
+./charmrun +p${p} ./charmsph -x ${X} -y ${Y} -z ${Z} -dt ${DT} -h ${H} -w ${W} -wb ${WB} -wp ${WP} -t ${T} -csm ${csm}
 

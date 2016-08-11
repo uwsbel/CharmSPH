@@ -42,7 +42,7 @@ Cell::Cell() : inbrs(NUM_NEIGHBORS), stepCount(1), updateCount(0), computesList(
            (p.pos.y <= fluidMin.y || p.pos.y > boundaryMax.y))
         {
           p.typeOfParticle = 0; // Boundary Marker
-          //p.pressure = BOUNDARY_PRESSURE;
+          p.pressure = BOUNDARY_PRESSURE;
           particles.push_back(p);
         }
         else if((p.pos.z > fluidMin.z) && (p.pos.z < fluidMax.z) && 
@@ -271,11 +271,24 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles2[i].acc = dVel_dRho[i].r + gravity;
-        particles2[i].pos += particles2[i].vel * 0.5 * dt;
         particles2[i].vel += particles2[i].acc * 0.5 * dt; 
+        particles[i].vel.x = velocityCheck(particles[i].vel.x);
+        particles[i].vel.y = velocityCheck(particles[i].vel.y);
+        particles[i].vel.z = velocityCheck(particles[i].vel.z);
+        particles2[i].pos += particles2[i].vel * 0.5 * dt;
+        
+        // particles2[i].pos += particles2[i].vel * 0.5 * dt;
+        // particles2[i].vel += particles2[i].acc * 0.5 * dt; 
+
+        particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
+        particles2[i].pressure = Eos(particles2[i].rho);
       }
-      particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
-      particles2[i].pressure = Eos(particles2[i].rho);
+      else {
+        particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
+      }
+
+      // particles2[i].rho += dVel_dRho[i].l * 0.5 * dt;
+      // particles2[i].pressure = Eos(particles2[i].rho);
     }   
   }
   else
@@ -286,16 +299,23 @@ void Cell::updatePropertiesSPH(vec4 *dVel_dRho, int iteration)
       if(typeOfParticle == -1)
       {
         particles[i].acc = dVel_dRho[i].r + gravity;
-        particles[i].pos += particles[i].vel * dt;
         particles[i].vel += particles[i].acc * dt; 
-
         particles[i].vel.x = velocityCheck(particles[i].vel.x);
         particles[i].vel.y = velocityCheck(particles[i].vel.y);
         particles[i].vel.z = velocityCheck(particles[i].vel.z);
+        particles[i].pos += particles[i].vel * dt;
+        // particles[i].pos += particles[i].vel * dt;
+        // particles[i].vel += particles[i].acc * dt; 
 
+        
+        particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
+        particles[i].pressure = Eos(particles[i].rho);
       }
-       particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
-       particles[i].pressure = Eos(particles[i].rho);
+      else {
+        particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
+      }
+       // particles[i].rho += dVel_dRho[i].l * dt; // With constant presure the density shouldnt beupdated
+       // particles[i].pressure = Eos(particles[i].rho);
 
     } 
   }
